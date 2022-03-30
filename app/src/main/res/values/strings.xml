@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">SmartLockClient</string>
+    <string name="SETUP_DONE">Setup Done</string>
+    <string name="SETUP_DONE_DIALOG_MESSAGE">The lock is now setup and it will automatically connect to the internet from now on.</string>
+    <string name="OK">OK</string>
+</resources>

@@ -313,6 +313,10 @@ public class MessagesTestActivity extends AppCompatActivity {
                             String[] msgSplit = msg.split(" ");
 
                             Log.w(TAG, "onReceive: " + msg);
+                            if (msgSplit.length < 2) {
+                                Log.e(TAG, "Less then 2");
+                                return;
+                            }
                             String cmd = aes.decrypt(msgSplit[0], msgSplit[1]);
                             if (cmd == null) {
                                 Log.e(TAG, "Error decrypting message! Operation Canceled.");

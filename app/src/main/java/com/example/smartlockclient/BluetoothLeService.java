@@ -30,14 +30,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import androidx.annotation.RequiresApi;
+
+import android.os.Looper;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service for managing connection and data communication with a GATT server hosted on a
@@ -60,6 +64,8 @@ public class BluetoothLeService extends Service {
 
     private boolean writePending = false;
     private int payloadSize = DEFAULT_MTU-3;
+
+    private String pendingMsg = "";
 
     private BluetoothGattCharacteristic terminalCharacteristic = null;
 
@@ -140,8 +146,6 @@ public class BluetoothLeService extends Service {
                 Log.d(TAG, "payload size " + payloadSize);
                 broadcastUpdate(ACTION_GATT_MTU_SIZE_CHANGED);
             }
-
-//            sendString("YR9MtTO7COEwrtpagrFUb51Q3xMQj53ObTkNjE13827GxEexkmBnz6D4la5i8YNuZWcrF2hsWB7sZo55o8wnVoHWYYo2gfZyBGKO23uJqGW0w4qlh275ILN43nVd4//UKXTu/IBM7zecbOu43uqxDVcj9i2btV0X4Ka5iZzOIL4JPZd7+Wkuie9OQde3zeMZvF0goZOrtRlLO9jy76OF6a2LQVtCjhMsTZkTTd5zSUB4SfdsYEX2eZRb3NdOxXcr0xpkppyr0/DQWfLEIPHugaa5+AGn5sr1MlDcRXMMxe8psduJCTLJvSBl2I+5btkQyfwketR0qPcoC6y5RM3cTw==");
         }
 
 
@@ -205,12 +209,14 @@ public class BluetoothLeService extends Service {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
 
             if(characteristic == terminalCharacteristic) { // NOPMD - test object identity
                 byte[] data = terminalCharacteristic.getValue();
                 Log.d(TAG,"read, len="+data.length);
+                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
+
+
         }
     };
 
@@ -282,7 +288,14 @@ public class BluetoothLeService extends Service {
 
         if (characteristic == terminalCharacteristic) {
             final byte[] data = characteristic.getValue();
-            intent.putExtra(EXTRA_DATA, new String(data));
+            if (data[data.length-1] != 4) {
+                pendingMsg += new String(data);
+                Log.e(TAG, "appending message");
+                return;
+            } else {
+                intent.putExtra(EXTRA_DATA, pendingMsg +  new String(data));
+                pendingMsg = "";
+            }
         } else {
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();

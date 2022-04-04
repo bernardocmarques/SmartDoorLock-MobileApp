@@ -139,7 +139,7 @@ public class MessagesTestActivity extends AppCompatActivity {
         });
 
         closeLockBtn.setOnClickListener(view -> {
-            //TODO
+            closeDoorCommunication();
         });
     }
 
@@ -216,32 +216,89 @@ public class MessagesTestActivity extends AppCompatActivity {
     };
 
 
-    private void generateAndSendSessionCredentials() {
+    private String generateSessionCredentials() {
         this.aes = new AESUtil(KEY_SIZE);
         this.rsa = new RSAUtil();
 
         String key = aes.generateNewSessionKey();
-        String keyEncrypted = rsa.encrypt("SSC " + key, rsaPubKey);
-        Log.d(TAG, keyEncrypted);
-        mBluetoothLeService.sendString(keyEncrypted);
+
+        return rsa.encrypt("SSC " + key, rsaPubKey);
     }
 
-    public void generateAndSendAuthCredentials(String seed) {
+    public String generateAuthCredentials(String seed) {
         try {
             String authCode = hmacBase64(seed, masterKey);
 
-            String msgEnc = aes.encrypt(new BLEMessage("SAC " + userId + " " + authCode).toString());
-            mBluetoothLeService.sendString(msgEnc);
+            return "SAC " + userId + " " + authCode;
 
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             e.printStackTrace();
             Log.e(TAG, "Exception!");
+            return null;
         }
     }
 
-    private void openDoorCommunication() {
 
-        generateAndSendSessionCredentials();
+    private void sendCommandWithAuthentication(String cmd, OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(generateSessionCredentials(), false,
+                responseSplitSSC -> {
+                    if (responseSplitSSC[0].equals("RAC")) {
+
+                        sendCommandAndReceiveResponse(generateAuthCredentials(responseSplitSSC[1]),
+                                responseSplitSAC -> {
+                                    if (responseSplitSAC[0].equals("ACK")) {
+
+                                        sendCommandAndReceiveResponse(cmd, callback);
+
+                                    } else { // command not ACK
+                                        Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
+                                    }
+                                });
+
+                    } else { // command not RAC
+                        Log.e(TAG, "Error: Should have received RAC command");
+                    }
+                });
+    }
+
+    private void openDoorCommunication() {
+        sendCommandWithAuthentication("RUD", responseSplit -> {
+            if (responseSplit[0].equals("ACK")) {
+                runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door Opened", Toast.LENGTH_LONG).show());
+            } else { // command not  ACK
+                Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
+            }
+        });
+    }
+
+    private void closeDoorCommunication() {
+        sendCommandWithAuthentication("RLD", responseSplit -> {
+            if (responseSplit[0].equals("ACK")) {
+                runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door Locked", Toast.LENGTH_LONG).show());
+            } else { // command not  ACK
+                Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
+            }
+        });
+    }
+
+
+    public interface OnResponseReceived {
+        void onResponseReceived(String[] responseSplit);
+    }
+
+
+    void sendCommandAndReceiveResponse(String cmd, OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(cmd,true, callback);
+    }
+
+
+    void sendCommandAndReceiveResponse(String cmd, boolean encrypt, OnResponseReceived callback) {
+        String msgEnc;
+        if (encrypt)
+            msgEnc = aes.encrypt(new BLEMessage(cmd).toString());
+        else msgEnc = cmd;
+
+        mBluetoothLeService.sendString(msgEnc);
 
         registerReceiver(
                 new BroadcastReceiver() {
@@ -252,76 +309,18 @@ public class MessagesTestActivity extends AppCompatActivity {
                         final String action = intent.getAction();
                         if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                             String msg = intent.getStringExtra(EXTRA_DATA);
+
                             String[] msgSplit = msg.split(" ");
+
+                            Log.w(TAG, "onReceive: " + msg);
                             String cmd = aes.decrypt(msgSplit[0], msgSplit[1]);
-                            String[] cmdSplit = cmd.split(" ");
+                            if (cmd == null) {
+                                Log.e(TAG, "Error decrypting message! Operation Canceled.");
+                                runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
+                            } else {
+                                String[] cmdSplit = cmd.split(" ");
 
-                            if (cmdSplit[0].equals("RAC")) {
-                                generateAndSendAuthCredentials(cmdSplit[1]);
-
-                                registerReceiver(
-                                        new BroadcastReceiver() {
-                                            @Override
-                                            public void onReceive(Context context, Intent intent) {
-                                                unregisterReceiver(this);
-
-                                                final String action = intent.getAction();
-                                                if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                                                    String msg = intent.getStringExtra(EXTRA_DATA);
-
-                                                    String[] msgSplit = msg.split(" ");
-
-
-                                                    String cmd = aes.decrypt(msgSplit[0], msgSplit[1]);
-                                                    String[] cmdSplit = cmd.split(" ");
-
-                                                    Log.e(TAG, "new cmd -> " + cmd);
-                                                    if (cmdSplit[0].equals("ACK")) {
-
-                                                        String msgEnc = aes.encrypt(new BLEMessage("RUD").toString());
-                                                        mBluetoothLeService.sendString(msgEnc);
-
-                                                        registerReceiver(
-                                                                new BroadcastReceiver() {
-                                                                    @Override
-                                                                    public void onReceive(Context context, Intent intent) {
-                                                                        unregisterReceiver(this);
-
-                                                                        final String action = intent.getAction();
-                                                                        if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                                                                            String msg = intent.getStringExtra(EXTRA_DATA);
-
-                                                                            String[] msgSplit = msg.split(" ");
-
-
-                                                                            String cmd = aes.decrypt(msgSplit[0], msgSplit[1]);
-                                                                            String[] cmdSplit = cmd.split(" ");
-
-                                                                            Log.e(TAG, "new cmd -> " + cmd);
-                                                                            if (cmdSplit[0].equals("ACK")) {
-
-                                                                                runOnUiThread(() -> Toast.makeText(context, "Door Opened", Toast.LENGTH_LONG).show());
-
-                                                                            } else { // command not  ACK
-                                                                                Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                },
-                                                                new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE)
-                                                        );
-
-                                                    } else { // command not ACK
-                                                        Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE)
-                                );
-
-                            } else { // command not RAC
-                                Log.e(TAG, "Error: Should have received RAC command");
+                                callback.onResponseReceived(cmdSplit);
                             }
                         }
                     }
@@ -329,4 +328,6 @@ public class MessagesTestActivity extends AppCompatActivity {
                 new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE)
         );
     }
+
+
 }

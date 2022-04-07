@@ -18,7 +18,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.Toast;
+
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -26,6 +29,7 @@ import java.util.Arrays;
 
 import static com.example.smartlockclient.BluetoothLeService.EXTRA_DATA;
 import static com.example.smartlockclient.Utils.hmacBase64;
+import static java.lang.Long.parseLong;
 
 public class MessagesTestActivity extends AppCompatActivity {
 
@@ -50,7 +54,6 @@ public class MessagesTestActivity extends AppCompatActivity {
 
     private BluetoothLeService mBluetoothLeService;
     private final String mDeviceAddress = "01:B6:EC:2A:C0:D9"; // fixme hardcoded while testing
-    private boolean mConnected = false;
 
     private AESUtil aes;
     private RSAUtil rsa;
@@ -60,6 +63,7 @@ public class MessagesTestActivity extends AppCompatActivity {
 
     Button openLockBtn;
     Button closeLockBtn;
+    SwitchMaterial bleConnectedSwitch;
 
     ActivityResultLauncher<String[]> bluetoothPermissionRequest =
             registerForActivityResult(new ActivityResultContracts
@@ -91,9 +95,10 @@ public class MessagesTestActivity extends AppCompatActivity {
         } else {
             openLockBtn = findViewById(R.id.btn_open_lock);
             closeLockBtn = findViewById(R.id.btn_close_lock);
+            bleConnectedSwitch = findViewById(R.id.switch_connected);
 
-            openLockBtn.setEnabled(false);
-            closeLockBtn.setEnabled(false);
+            updateUIOnBLEDisconnected();
+            bleConnectedSwitch.setText(R.string.BLE_CONNECTING);
 
             bindToBLEService();
             createUIListeners();
@@ -102,11 +107,27 @@ public class MessagesTestActivity extends AppCompatActivity {
 
     }
 
+    void updateUIOnBLEDisconnected() {
+        bleConnectedSwitch.setChecked(false);
+        bleConnectedSwitch.setText(R.string.BLE_DISCONNECTED);
+
+        openLockBtn.setEnabled(false);
+        closeLockBtn.setEnabled(false);
+    }
+
+    void updateUIOnBLEConnected() {
+        bleConnectedSwitch.setChecked(true);
+        bleConnectedSwitch.setText(R.string.BLE_CONNECTED);
+
+        openLockBtn.setEnabled(true);
+        closeLockBtn.setEnabled(true);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-        if (mBluetoothLeService != null) {
+        if (mBluetoothLeService != null && !mBluetoothLeService.isConnected()) {
             final boolean result = mBluetoothLeService.connect(mDeviceAddress);
             Log.d(TAG, "Connect request result=" + result);
         }
@@ -129,6 +150,7 @@ public class MessagesTestActivity extends AppCompatActivity {
 
 
     void bindToBLEService() {
+
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
@@ -140,6 +162,17 @@ public class MessagesTestActivity extends AppCompatActivity {
 
         closeLockBtn.setOnClickListener(view -> {
             closeDoorCommunication();
+        });
+
+        bleConnectedSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (!mBluetoothLeService.isConnected()) {
+                    mBluetoothLeService.connect(mDeviceAddress);
+                    bleConnectedSwitch.setText(R.string.BLE_CONNECTING);
+                }
+            } else {
+                if (mBluetoothLeService.isConnected()) mBluetoothLeService.disconnect();
+            }
         });
     }
 
@@ -201,16 +234,15 @@ public class MessagesTestActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mConnected = false;
+                updateUIOnBLEDisconnected();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
 //                generateAndSendCredentials();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
-                openLockBtn.setEnabled(true);
-                closeLockBtn.setEnabled(true);
+                updateUIOnBLEConnected();
+
             }
         }
     };
@@ -296,9 +328,17 @@ public class MessagesTestActivity extends AppCompatActivity {
         String msgEnc;
         if (encrypt)
             msgEnc = aes.encrypt(new BLEMessage(cmd).toString());
-        else msgEnc = cmd;
+        else
+            msgEnc = cmd;
 
-        mBluetoothLeService.sendString(msgEnc);
+        boolean success = mBluetoothLeService.sendString(msgEnc);
+
+        if (!success) {
+            if (!mBluetoothLeService.isConnected()) {
+                updateUIOnBLEDisconnected();
+            }
+            return;
+        }
 
         registerReceiver(
                 new BroadcastReceiver() {
@@ -308,24 +348,38 @@ public class MessagesTestActivity extends AppCompatActivity {
 
                         final String action = intent.getAction();
                         if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                            String msg = intent.getStringExtra(EXTRA_DATA);
+                            String msgEnc = intent.getStringExtra(EXTRA_DATA);
 
-                            String[] msgSplit = msg.split(" ");
+                            String[] msgEncSplit = msgEnc.split(" ");
 
-                            Log.w(TAG, "onReceive: " + msg);
-                            if (msgSplit.length < 2) {
+                            Log.w(TAG, "onReceive: " + msgEnc);
+                            if (msgEncSplit.length < 2) {
                                 Log.e(TAG, "Less then 2");
                                 return;
                             }
-                            String cmd = aes.decrypt(msgSplit[0], msgSplit[1]);
-                            if (cmd == null) {
+                            String msg = aes.decrypt(msgEncSplit[0], msgEncSplit[1]);
+                            if (msg == null) {
                                 Log.e(TAG, "Error decrypting message! Operation Canceled.");
                                 runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
-                            } else {
-                                String[] cmdSplit = cmd.split(" ");
-
-                                callback.onResponseReceived(cmdSplit);
+                                return;
                             }
+
+                            String[] msgSplit = msg.split(" ");
+                            int sizeCmdSplit = msgSplit.length;
+
+                            BLEMessage bleMessage = new BLEMessage(String.join(" ", Arrays.copyOfRange(msgSplit, 0, sizeCmdSplit-3)),  parseLong(msgSplit[sizeCmdSplit-3]), parseLong(msgSplit[sizeCmdSplit-2]), parseLong(msgSplit[sizeCmdSplit-1]));
+//                            BLEMessage bleMessage = new BLEMessage(cmd);
+                            Log.e(TAG, "onReceive: " + bleMessage.message);
+                            if (bleMessage.isValid()) {
+                                String[] cmdSplit = bleMessage.message.split(" ");
+                                callback.onResponseReceived(cmdSplit);
+
+                            } else {
+                                Log.e(TAG, "Message not valid! Operation Canceled.");
+                                runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
+                            }
+
+
                         }
                     }
                 },

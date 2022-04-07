@@ -3,4 +3,7 @@
     <string name="SETUP_DONE">Setup Done</string>
     <string name="SETUP_DONE_DIALOG_MESSAGE">The lock is now setup and it will automatically connect to the internet from now on.</string>
     <string name="OK">OK</string>
+    <string name="BLE_DISCONNECTED">Disconnected</string>
+    <string name="BLE_CONNECTED">Connected</string>
+    <string name="BLE_CONNECTING">Connecting...</string>
 </resources>

@@ -66,6 +66,10 @@ class AESUtil {
             String result = Base64.encodeToString(cipheredText, Base64.NO_WRAP);
             result += " " + Base64.encodeToString(ivSpec.getIV(), Base64.NO_WRAP);
 
+            if (result.charAt(0) == '+') {
+                result = result.replaceFirst("[+]", "-"); // replace '+' with '-', this is used to prevent base64 string started with '+' to be handled as an AT command response
+            }
+
             return result;
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException e) {

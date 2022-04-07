@@ -220,6 +220,10 @@ public class BluetoothLeService extends Service {
         }
     };
 
+    public boolean isConnected() {
+        return mConnectionState == STATE_CONNECTED;
+    }
+
 
     public boolean sendString(String str) {
 
@@ -293,7 +297,9 @@ public class BluetoothLeService extends Service {
                 Log.e(TAG, "appending message");
                 return;
             } else {
-                intent.putExtra(EXTRA_DATA, pendingMsg +  new String(data));
+                String str = new String(data);
+
+                intent.putExtra(EXTRA_DATA, pendingMsg +  str.substring(0, str.length() - 1));
                 pendingMsg = "";
             }
         } else {

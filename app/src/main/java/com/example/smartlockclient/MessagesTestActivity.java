@@ -63,6 +63,7 @@ public class MessagesTestActivity extends AppCompatActivity {
 
     Button openLockBtn;
     Button closeLockBtn;
+    Button createNewInviteBtn;
     SwitchMaterial bleConnectedSwitch;
 
     ActivityResultLauncher<String[]> bluetoothPermissionRequest =
@@ -95,6 +96,7 @@ public class MessagesTestActivity extends AppCompatActivity {
         } else {
             openLockBtn = findViewById(R.id.btn_open_lock);
             closeLockBtn = findViewById(R.id.btn_close_lock);
+            createNewInviteBtn = findViewById(R.id.btn_create_new_invite);
             bleConnectedSwitch = findViewById(R.id.switch_connected);
 
             updateUIOnBLEDisconnected();
@@ -113,6 +115,7 @@ public class MessagesTestActivity extends AppCompatActivity {
 
         openLockBtn.setEnabled(false);
         closeLockBtn.setEnabled(false);
+        createNewInviteBtn.setEnabled(false);
     }
 
     void updateUIOnBLEConnected() {
@@ -121,6 +124,7 @@ public class MessagesTestActivity extends AppCompatActivity {
 
         openLockBtn.setEnabled(true);
         closeLockBtn.setEnabled(true);
+        createNewInviteBtn.setEnabled(true);
     }
 
     @Override
@@ -150,7 +154,6 @@ public class MessagesTestActivity extends AppCompatActivity {
 
 
     void bindToBLEService() {
-
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
@@ -162,6 +165,11 @@ public class MessagesTestActivity extends AppCompatActivity {
 
         closeLockBtn.setOnClickListener(view -> {
             closeDoorCommunication();
+        });
+
+        createNewInviteBtn.setOnClickListener(view -> {
+            Intent intent = new Intent(getApplicationContext(), CreateNewInviteActivity.class);
+            startActivity(intent);
         });
 
         bleConnectedSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {

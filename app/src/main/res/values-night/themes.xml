@@ -5,6 +5,8 @@
         <item name="colorPrimary">@color/purple_200</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
         <item name="colorOnPrimary">@color/black</item>
+        <item name="android:textColorPrimary">@color/white</item>
+
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_200</item>
@@ -18,6 +20,13 @@
         ...
         <item name="colorSecondary">@color/blue_bluetooth</item>
     </style>
+
+    <style name="ListItem">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+
+
 
 <!--    <style name="BLESwitch" parent="Theme.AppCompat.DayNight">-->
 <!--        &lt;!&ndash; active thumb & track color (30% transparency) &ndash;&gt;-->

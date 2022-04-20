@@ -16,6 +16,7 @@
 
 package com.example.smartlockclient;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
  * Service for managing connection and data communication with a GATT server hosted on a
  * given Bluetooth LE device.
  */
+//@SuppressLint("MissingPermission")
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class BluetoothLeService extends Service {
     private final static String TAG = "SmartLock@BLEService";

@@ -12,7 +12,7 @@ import java.util.HashMap;
 public class BLEMessage {
     public static final int MAX_NONCE = 2147483647;
 
-    private static final long ONE_SECOND_IN_MILLIS=1000; //millisecs
+    private static final long ONE_SECOND_IN_MILLIS = Utils.ONE_SECOND_IN_MILLIS; //millisecs
 
     private static final HashMap<Date, Long> nonceMap = new HashMap<>();
     private static final String TAG = "BLEMessage";

@@ -91,7 +91,6 @@ public class MessagesTestActivity extends AppCompatActivity {
         setContentView(R.layout.activity_messages_test);
 
         if (!gotBluetoothPermission()) {
-
             requestBluetoothPermission();
         } else {
             openLockBtn = findViewById(R.id.btn_open_lock);
@@ -150,7 +149,6 @@ public class MessagesTestActivity extends AppCompatActivity {
         unbindService(mServiceConnection);
         mBluetoothLeService = null;
     }
-
 
 
     void bindToBLEService() {

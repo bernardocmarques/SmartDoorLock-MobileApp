@@ -41,10 +41,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent = new Intent(getApplicationContext(), CreateNewInviteActivity.class);
-        startActivity(intent);
-
-
         setContentView(R.layout.activity_main);
 
         if (!gotLocationPermission()) {

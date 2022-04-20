@@ -6,4 +6,6 @@
     <string name="BLE_DISCONNECTED">Disconnected</string>
     <string name="BLE_CONNECTED">Connected</string>
     <string name="BLE_CONNECTING">Connecting...</string>
+    <string name="INVALID_DATE_ERROR">Invalid Date</string>
+    <string name="create_new_invite">Create new invite</string>
 </resources>

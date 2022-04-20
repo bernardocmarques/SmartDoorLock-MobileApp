@@ -9,7 +9,7 @@
     tools:context=".MessagesTestActivity">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayout"
+        android:id="@+id/textInputLayoutUT"
         style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,14 +39,99 @@
         android:hint="Select date"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayout"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayoutUT"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_baseline_calendar_today_24"
+        app:endIconContentDescription="Use date picker"
         style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox">
 
-        <com.google.android.material.textfield.TextInputEditText
+        <mk.webfactory.dz.maskededittext.MaskedEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="date"/>
+            android:inputType="date"
+            app:maskededittext_enforceMaskLength="true"
+            app:maskededittext_mask="##/##/####"
+            app:maskededittext_maskCharacter="#" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/valid_until_date_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginHorizontal="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/valid_from_date_picker"
+        android:hint="Select date"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_baseline_calendar_today_24"
+        app:endIconContentDescription="Use date picker"
+        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox">
+
+        <mk.webfactory.dz.maskededittext.MaskedEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="date"
+            app:maskededittext_enforceMaskLength="true"
+            app:maskededittext_mask="##/##/####"
+            app:maskededittext_maskCharacter="#" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.dpro.widgets.WeekdaysPicker
+        android:id="@+id/weekdays"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:layout_marginTop="20dp"
+        android:layout_marginHorizontal="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/valid_until_date_picker"
+        app:sunday_first_day="true"
+        app:highlight_color="?attr/colorPrimary"
+        app:background_color="#e0e0e0"
+        app:text_unselected_color="#676767"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/one_day_date_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginHorizontal="20dp"
+        android:hint="Select date"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayoutUT"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_baseline_calendar_today_24"
+        app:endIconContentDescription="Use date picker"
+        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox">
+
+        <mk.webfactory.dz.maskededittext.MaskedEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="date"
+            app:maskededittext_enforceMaskLength="true"
+            app:maskededittext_mask="##/##/####"
+            app:maskededittext_maskCharacter="#" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <Button
+        android:id="@+id/btn_create_new_invite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Widget.MaterialComponents.Button"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:text="@string/create_new_invite"
+        />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>

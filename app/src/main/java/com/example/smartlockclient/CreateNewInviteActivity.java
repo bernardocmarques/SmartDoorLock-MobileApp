@@ -8,6 +8,10 @@ import com.dpro.widgets.WeekdaysPicker;
 import com.example.smartlockclient.Utils.UserType;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,6 +24,7 @@ import android.widget.Toast;
 
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.ParseException;
@@ -31,9 +36,10 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class CreateNewInviteActivity extends AppCompatActivity {
+public class CreateNewInviteActivity extends AppCompatActivity implements BLEManager.BLEActivity {
     private static final String TAG = "SmartLock@CreateNewInvite";
 
+    BLEManager bleManager;
 
     /* UI */
     AutoCompleteTextView userTypeSelect;
@@ -53,6 +59,8 @@ public class CreateNewInviteActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_new_invite);
+
+        bleManager = BLEManager.getInstance();
 
         createUI();
     }
@@ -81,7 +89,7 @@ public class CreateNewInviteActivity extends AppCompatActivity {
         createOneDayDatePickers();
 
         createInviteBtn.setOnClickListener(view -> {
-            Log.i(TAG, getInviteRequestCommand());
+            sendInviteRequest();
         });
     }
 
@@ -195,5 +203,45 @@ public class CreateNewInviteActivity extends AppCompatActivity {
             Log.e(TAG, "getInviteRequestCommand: Error parsing date");
         }
         return "" ;
+    }
+
+    private void sendInviteRequest() {
+        bleManager.sendCommandWithAuthentication(this, getInviteRequestCommand(), responseSplit -> {
+            if (responseSplit[0].equals("SNI")) {
+                String inviteCode = responseSplit[1];
+                Log.i(TAG, "Invite: " + inviteCode);
+
+                runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.invite_create_title)
+                        .setMessage(inviteCode)
+                        .setPositiveButton(R.string.COPY_TO_CLIPBOARD, (dialog, which) -> {
+
+                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                            ClipData clip = ClipData.newPlainText("Invite id", inviteCode);
+                            clipboard.setPrimaryClip(clip);
+                            Toast.makeText(getApplicationContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
+
+                        })
+                        .setNegativeButton(R.string.CLOSE, (dialog, which) -> {})
+                        .show());
+            } else { // command not SNI
+                Log.e(TAG, "Error: Should have received SNI command. (After RNI)");
+            }
+        });
+    }
+
+    @Override
+    public void updateUIOnBLEDisconnected() {
+        finish();
+    }
+
+    @Override
+    public void updateUIOnBLEConnected() {
+        // NOP
+    }
+
+    @Override
+    public Activity getActivity() {
+        return this;
     }
 }

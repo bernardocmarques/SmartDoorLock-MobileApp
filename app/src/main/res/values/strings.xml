@@ -8,4 +8,9 @@
     <string name="BLE_CONNECTING">Connecting...</string>
     <string name="INVALID_DATE_ERROR">Invalid Date</string>
     <string name="create_new_invite">Create new invite</string>
+    <string name="invite_create_title">Invite Created</string>
+    <string name="invite_created_dialog_message">"Invite ID: "</string>
+    <string name="CLOSE">Close</string>
+    <string name="COPY_TO_CLIPBOARD">Copy to Clipboard</string>
+    <string name="redeem_invite">Redeem Invite</string>
 </resources>

@@ -14,7 +14,10 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.util.Arrays;
+import java.util.Objects;
 
 public class BLEManager {
 
@@ -22,11 +25,10 @@ public class BLEManager {
 
     private static BLEManager INSTANCE = null;
 
-    /* Testing variables */
+    /* Testing variables */  // todo remove hardcode
 
     String rsaPubKey = Utils.rsaPubKey;
-    String keyID = "7C:DF:A1:1A:E:5A";
-    String userId = Utils.userId;
+    String keyID = "7C:DF:A1:1A:0E:5A";
 
     /* Testing variables (end) */
 
@@ -85,6 +87,7 @@ public class BLEManager {
     }
 
     public String generateAuthCredentials(String seed) {
+        String userId = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
         String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, keyID + userId);
         return "SAC " + userId + " " + authCode;
     }

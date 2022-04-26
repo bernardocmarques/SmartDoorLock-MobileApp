@@ -1,7 +1,6 @@
 package com.bernardocmarques.smartlockclient;
 
 import static com.bernardocmarques.smartlockclient.Utils.SERVER_URL;
-import static com.bernardocmarques.smartlockclient.Utils.userId;
 
 import com.bernardocmarques.smartlockclient.Utils.KeyStoreUtil;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,7 +11,10 @@ import android.util.Log;
 import android.widget.Button;
 
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.JsonObject;
+
+import java.util.Objects;
 
 public class RedeemInviteActivity extends AppCompatActivity {
 
@@ -32,6 +34,8 @@ public class RedeemInviteActivity extends AppCompatActivity {
 
 
         redeemInviteBtn.setOnClickListener(view -> {
+
+            String userId = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
 
             String inviteCodeB64 = inviteCodeTextInputLayout.getEditText().getText().toString();
             Log.i(TAG, "onCreate: inviteCodeB64 = " + inviteCodeB64);

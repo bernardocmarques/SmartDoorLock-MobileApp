@@ -93,7 +93,7 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
         String[] userTypeKeys = {"Admin", "Owner", "Tenant", "Periodic User", "One-time User"};
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list_item, userTypeKeys);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, userTypeKeys);
 
 
         userTypeSelect.setAdapter(adapter);

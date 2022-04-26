@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.gms.common.util.IOUtils;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -60,7 +61,7 @@ import java.util.regex.Pattern;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+
 
 public class Utils {
 
@@ -74,7 +75,6 @@ public class Utils {
             "sMcJJ3ry5Z4HEZi+SUbCjL7I5ZYF8aZq3YRxS4n2ZO7/w7n7B5621HMsahRNUi76" +
             "1wIDAQAB";
 
-    public static String userId = "0vn3kfl3n";
 //    public static String userId = "user123";
 
     /* Testing variables (end) */
@@ -89,7 +89,7 @@ public class Utils {
     public static String SERVER_URL = "http://192.168.1.7:5000";
 
 
-    public static enum UserType {
+    public enum UserType {
         ADMIN,
         OWNER,
         TENANT,
@@ -98,18 +98,6 @@ public class Utils {
     }
 
     static String TAG = "SmartLock@Utils";
-
-    public static String hmacBase64(String dataBase64, String keyBase64)
-            throws NoSuchAlgorithmException, InvalidKeyException {
-
-
-        SecretKeySpec secretKeySpec = new SecretKeySpec(Base64.decode(keyBase64, Base64.NO_WRAP), "HmacSHA256");
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(secretKeySpec);
-        byte[] hmacResult = mac.doFinal(Base64.decode(dataBase64, Base64.NO_WRAP));
-
-        return Base64.encodeToString(hmacResult, Base64.NO_WRAP);
-    }
 
 
     public static void createDatePicker(TextInputLayout textInputLayout, AppCompatActivity context) {
@@ -335,27 +323,29 @@ public class Utils {
     /*** -------------------------------------------- ***/
 
     public static void getCertificateFromDatabase(String lock_id, OnTaskCompleted<X509Certificate> callback) {
-        (new httpRequestJson(response -> {
-            if (response.get("success").getAsBoolean()) {
-                byte[] decoded = Base64.decode(response.get("certificate").getAsString(), Base64.NO_WRAP);
-                InputStream inputStream = new ByteArrayInputStream(decoded);
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+            (new httpRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    byte[] decoded = Base64.decode(response.get("certificate").getAsString(), Base64.NO_WRAP);
+                    InputStream inputStream = new ByteArrayInputStream(decoded);
 
-                try {
-                    X509Certificate certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(inputStream);
-                    callback.onTaskCompleted(certificate);
+                    try {
+                        X509Certificate certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(inputStream);
+                        callback.onTaskCompleted(certificate);
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    callback.onTaskCompleted(null);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        callback.onTaskCompleted(null);
+                    }
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
                 }
-            } else {
-                Log.e(TAG, "Error code " +
-                        response.get("code").getAsString() +
-                        ": " +
-                        response.get("msg").getAsString());
-                callback.onTaskCompleted(null);
-            }
-        })).execute(SERVER_URL + "/get-door-certificate");
+            })).execute(SERVER_URL + "/get-door-certificate?smart_lock_mac=" + lock_id + "&id_token=" + tokenId);
+        });
     }
 
     public static void getPublicKeyBase64FromDatabase(String lock_id, Context context, OnTaskCompleted<String> callback) {
@@ -394,6 +384,8 @@ public class Utils {
 
         public String generateMasterKey(String keyID) {
 
+            Log.i(TAG, "save key with id: " + keyID);
+
             try {
                 keyStore.deleteEntry(keyID);
 
@@ -421,12 +413,12 @@ public class Utils {
         }
 
         public String hmacBase64WithMasterKey(String dataBase64, String keyID) {
+            Log.i(TAG, "hmac with key id: " + keyID);
 
             try {
                 SecretKey masterKey = (SecretKey) keyStore.getKey(keyID, null);
                 Mac mac = Mac.getInstance("HmacSHA256");
                 mac.init(masterKey);
-
 
 
                 byte[] hmacResult = mac.doFinal(Base64.decode(dataBase64, Base64.NO_WRAP));

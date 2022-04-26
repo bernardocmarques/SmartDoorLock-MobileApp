@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Set sidebar
         sidebar = new Sidebar(this);
+        Utils.getPublicKeyBase64FromDatabase("7C:DF:A1:1A:0E:5A", this, key -> Log.i(TAG, key)); // todo remove hardcode
 
         if (!gotLocationPermission()) {
             requestLocationPermission();

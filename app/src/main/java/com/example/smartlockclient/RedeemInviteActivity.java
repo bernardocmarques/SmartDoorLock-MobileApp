@@ -1,6 +1,7 @@
 package com.example.smartlockclient;
 
 import static com.example.smartlockclient.Utils.SERVER_URL;
+import static com.example.smartlockclient.Utils.userId;
 
 import com.example.smartlockclient.Utils.KeyStoreUtil;
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,10 +48,10 @@ public class RedeemInviteActivity extends AppCompatActivity {
 
 
 
-            String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC);
+            String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + userId);
 
             JsonObject data = new JsonObject();
-            data.addProperty("id_token", "user123"); //fixme remove hardcode
+            data.addProperty("id_token", userId); //fixme remove hardcode
             data.addProperty("invite_id", inviteID);
             data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
 

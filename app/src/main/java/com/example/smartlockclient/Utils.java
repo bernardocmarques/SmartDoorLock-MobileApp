@@ -2,6 +2,7 @@ package com.example.smartlockclient;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -25,6 +26,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -41,12 +43,26 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.PKIXCertPathValidatorResult;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 
 
 import javax.crypto.Cipher;
@@ -68,7 +84,7 @@ public class Utils {
             "1wIDAQAB";
 
     public static String userId = "0vn3kfl3n";
-    public static String masterKey = "SoLXxAJHi1Z3NKGHNnS5n4SRLv5UmTB4EssASi0MmoI=";
+//    public static String userId = "user123";
 
     /* Testing variables (end) */
 
@@ -153,56 +169,43 @@ public class Utils {
         void onTaskCompleted(T obj);
     }
 
-//    public static class httpRequestJson extends AsyncTask<String, Void, JsonObject> {
-//
-//        private final OnTaskCompleted<JsonObject> callback;
-//        private final Cache cache;
-//
-//        public httpRequestJson(OnTaskCompleted<JsonObject> callback) {
-//            this.callback = callback;
-//            this.cache = Cache.getInstanceSmallFiles();
-//        }
-//
-//        @Override
-//        protected void onPreExecute() {
-//        }
-//
-//        @Override
-//        protected JsonObject doInBackground(String[] urls) {
-//            URL url;
-//
-//
-//
-//            try {
-//                url = new URL(urls[0]);
-//                HttpURLConnection connection;
-//                connection = (HttpURLConnection) url.openConnection();
-//                connection.setDoInput(true);
-//                connection.connect();
-//                InputStream input = connection.getInputStream();
-//
-//                JsonObject jsonObject = JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
-//
-//                cache.save(urls[0], jsonObject.toString().getBytes(StandardCharsets.UTF_8));
-//                return jsonObject;
-//
-//            } catch (IOException e) {
-//                Log.e(TAG, e.getMessage());
-//
-//                byte[] cachedValue = cache.get(urls[0]);
-//
-//                if (cachedValue != null && cachedValue.length > 0) {
-//                    return JsonParser.parseString(new String(cachedValue, StandardCharsets.UTF_8)).getAsJsonObject();
-//                }
-//            }
-//            return null;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(JsonObject result) {
-//            callback.onTaskCompleted(result);
-//        }
-//    }
+    public static class httpRequestJson extends AsyncTask<String, Void, JsonObject> {
+
+        private final OnTaskCompleted<JsonObject> callback;
+
+        public httpRequestJson(OnTaskCompleted<JsonObject> callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected JsonObject doInBackground(String[] urls) {
+            URL url;
+
+            try {
+                url = new URL(urls[0]);
+                HttpURLConnection connection;
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+
+                return JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
+
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JsonObject result) {
+            callback.onTaskCompleted(result);
+        }
+    }
 
     public static class httpPostRequestJson extends AsyncTask<String, Void, JsonObject> {
 
@@ -251,6 +254,42 @@ public class Utils {
             callback.onTaskCompleted(result);
         }
     }
+
+
+    /*** -------------------------------------------- ***/
+    /*** --------------- Server Utils --------------- ***/
+    /*** -------------------------------------------- ***/
+
+    public static void getCertificateFromDatabase(String lock_id, OnTaskCompleted<X509Certificate> callback) {
+        (new httpRequestJson(response -> {
+            if (response.get("success").getAsBoolean()) {
+                byte[] decoded = Base64.decode(response.get("certificate").getAsString(), Base64.NO_WRAP);
+                InputStream inputStream = new ByteArrayInputStream(decoded);
+
+                try {
+                    X509Certificate certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(inputStream);
+                    callback.onTaskCompleted(certificate);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    callback.onTaskCompleted(null);
+                }
+            } else {
+                Log.e(TAG, "Error code " +
+                        response.get("code").getAsString() +
+                        ": " +
+                        response.get("msg").getAsString());
+                callback.onTaskCompleted(null);
+            }
+        })).execute(SERVER_URL + "/get-door-certificate");
+    }
+
+    public static void getPublicKeyBase64FromDatabase(String lock_id, Context context, OnTaskCompleted<String> callback) {
+        getCertificateFromDatabase(lock_id, certificate -> {
+            callback.onTaskCompleted(getPublicKeyBase64FromCertificate(certificate, context));
+        });
+    }
+
 
     /*** -------------------------------------------- ***/
     /*** ----------------- KeyStore ----------------- ***/
@@ -326,6 +365,59 @@ public class Utils {
             }
         }
 
+    }
+
+    /*** -------------------------------------------- ***/
+    /*** ----------- CA and Certificates ------------ ***/
+    /*** -------------------------------------------- ***/
+    public static String getPublicKeyBase64FromCertificate(X509Certificate cert, Context context) {
+        try {
+            cert.checkValidity();
+            validateCertificate(cert, context);
+
+            return Base64.encodeToString(cert.getPublicKey().getEncoded(), Base64.NO_WRAP);
+        } catch (CertificateExpiredException e) {
+            Log.e(TAG,"(Certificate expired)" + e.getMessage());
+            e.printStackTrace();
+        } catch (CertificateNotYetValidException e) {
+            Log.e(TAG,"(Certificate not yet valid)" + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public static void validateCertificate(X509Certificate c1, Context context) throws Exception {
+        try {
+            InputStream  issuerCertInoutStream = context.getResources().openRawResource(R.raw.my_ca);
+            X509Certificate issuerCert = getCertFromFile(issuerCertInoutStream);
+            TrustAnchor anchor = new TrustAnchor(issuerCert, null);
+            Set<TrustAnchor> anchors = Collections.singleton(anchor);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            List<Certificate> list = Collections.singletonList(c1);
+            CertPath path = cf.generateCertPath(list);
+            PKIXParameters params = new PKIXParameters(anchors);
+            params.setRevocationEnabled(false);
+            CertPathValidator validator = CertPathValidator.getInstance("PKIX");
+            PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator
+                    .validate(path, params);
+        } catch (Exception e) {
+            Log.e(TAG,"EXCEPTION (Certificate not valid) " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    private static X509Certificate getCertFromFile(InputStream inputStream) throws Exception {
+
+        InputStream caInput = new BufferedInputStream(inputStream);
+        X509Certificate cert = null;
+        CertificateFactory cf = CertificateFactory.getInstance("X509");
+        cert = (X509Certificate) cf.generateCertificate(caInput);
+        cert.getSerialNumber();
+        return cert;
     }
 
 }

@@ -4,6 +4,7 @@ import static android.content.Context.BIND_AUTO_CREATE;
 
 import static com.example.smartlockclient.BluetoothLeService.EXTRA_DATA;
 import static com.example.smartlockclient.Utils.hmacBase64;
+import static com.example.smartlockclient.Utils.userId;
 import static java.lang.Long.parseLong;
 
 import android.app.Activity;
@@ -24,16 +25,15 @@ import java.util.Arrays;
 
 public class BLEManager {
 
-    static String TAG = "Cycling_Fizz@PathRecorder";
+    static String TAG = "SmartLock@BLEManager";
 
     private static BLEManager INSTANCE = null;
 
     /* Testing variables */
 
     String rsaPubKey = Utils.rsaPubKey;
-
+    String keyID = "7C:DF:A1:1A:E:5A";
     String userId = Utils.userId;
-    String masterKey = Utils.masterKey;
 
     /* Testing variables (end) */
 
@@ -92,16 +92,8 @@ public class BLEManager {
     }
 
     public String generateAuthCredentials(String seed) {
-        try {
-            String authCode = hmacBase64(seed, masterKey);
-
-            return "SAC " + userId + " " + authCode;
-
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            e.printStackTrace();
-            Log.e(TAG, "Exception!");
-            return null;
-        }
+        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, keyID + userId);
+        return "SAC " + userId + " " + authCode;
     }
 
 

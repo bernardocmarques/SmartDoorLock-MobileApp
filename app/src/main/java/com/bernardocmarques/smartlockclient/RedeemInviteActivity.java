@@ -1,21 +1,18 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
-import static com.example.smartlockclient.Utils.SERVER_URL;
-import static com.example.smartlockclient.Utils.userId;
+import static com.bernardocmarques.smartlockclient.Utils.SERVER_URL;
+import static com.bernardocmarques.smartlockclient.Utils.userId;
 
-import com.example.smartlockclient.Utils.KeyStoreUtil;
+import com.bernardocmarques.smartlockclient.Utils.KeyStoreUtil;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.JsonObject;
-
-import java.util.Objects;
 
 public class RedeemInviteActivity extends AppCompatActivity {
 
@@ -27,6 +24,7 @@ public class RedeemInviteActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_redeem_invite);
+        Utils.forceLightModeOn();
 
         inviteCodeTextInputLayout = findViewById(R.id.text_input_invite_code);
         redeemInviteBtn = findViewById(R.id.btn_redeem_invite);

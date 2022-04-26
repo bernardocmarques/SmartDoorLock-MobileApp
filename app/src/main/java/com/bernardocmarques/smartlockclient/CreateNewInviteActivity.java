@@ -1,40 +1,29 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.dpro.widgets.OnWeekdaysChangeListener;
 import com.dpro.widgets.WeekdaysPicker;
-import com.example.smartlockclient.Utils.UserType;
+import com.bernardocmarques.smartlockclient.Utils.UserType;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.material.datepicker.MaterialDatePicker;
-import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class CreateNewInviteActivity extends AppCompatActivity implements BLEManager.BLEActivity {
     private static final String TAG = "SmartLock@CreateNewInvite";
@@ -59,6 +48,8 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_new_invite);
+        Utils.forceLightModeOn();
+
 
         bleManager = BLEManager.getInstance();
 

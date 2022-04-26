@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "816495967297",
+    "firebase_url": "https://smartdoorlock-16418-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "smartdoorlock-16418",
+    "storage_bucket": "smartdoorlock-16418.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:816495967297:android:6f2dc9280ac56f25029ac0",
+        "android_client_info": {
+          "package_name": "com.bernardocmarques.smartlockclient"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "816495967297-0h26fvs4hp9tfm9upt6f6oa0neqsdd02.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZjlRGb-s-hOzAoA5IrPcifr7BaxZi7X8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "816495967297-0h26fvs4hp9tfm9upt6f6oa0neqsdd02.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

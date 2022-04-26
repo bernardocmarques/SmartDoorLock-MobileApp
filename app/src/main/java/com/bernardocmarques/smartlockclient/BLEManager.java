@@ -1,14 +1,9 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
-import static android.content.Context.BIND_AUTO_CREATE;
-
-import static com.example.smartlockclient.BluetoothLeService.EXTRA_DATA;
-import static com.example.smartlockclient.Utils.hmacBase64;
-import static com.example.smartlockclient.Utils.userId;
+import static com.bernardocmarques.smartlockclient.BluetoothLeService.EXTRA_DATA;
 import static java.lang.Long.parseLong;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,8 +14,6 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 public class BLEManager {

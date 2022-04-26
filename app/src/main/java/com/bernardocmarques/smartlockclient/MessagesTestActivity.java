@@ -1,4 +1,4 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -8,28 +8,18 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-
-import static com.example.smartlockclient.BluetoothLeService.EXTRA_DATA;
-import static com.example.smartlockclient.Utils.hmacBase64;
 import static java.lang.Long.parseLong;
 
 public class MessagesTestActivity extends AppCompatActivity implements BLEManager.BLEActivity {
@@ -71,6 +61,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages_test);
+        Utils.forceLightModeOn();
 
         bleManager = BLEManager.getInstance();
 

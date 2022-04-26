@@ -1,4 +1,4 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
 import org.junit.Test;
 

@@ -6,6 +6,15 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
+    <include
+        android:id="@+id/map_toolbar"
+        layout="@layout/main_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+
     <Button
         android:id="@+id/btn_setup_lock"
         android:layout_width="wrap_content"
@@ -25,5 +34,25 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="20dp"/>
+
+
+
+
+    <RelativeLayout
+        android:id="@+id/overlay"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:background="@color/darkTransparent"
+        android:elevation="9dp"
+        android:visibility="gone"/>
+
+    <include
+        android:id="@+id/sidebar_layout"
+        layout="@layout/sidebar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SmartLockClient</string>
+    <string name="app_name">Smart Lock Client</string>
     <string name="SETUP_DONE">Setup Done</string>
     <string name="SETUP_DONE_DIALOG_MESSAGE">The lock is now setup and it will automatically connect to the internet from now on.</string>
     <string name="OK">OK</string>
@@ -13,4 +13,37 @@
     <string name="CLOSE">Close</string>
     <string name="COPY_TO_CLIPBOARD">Copy to Clipboard</string>
     <string name="redeem_invite">Redeem Invite</string>
+    <string name="smart_locks">Smart Locks</string>
+    <string name="sidebar_about">About Smart Locks</string>
+    <string name="sidebar_profile">Profile</string>
+    <string name="sidebar_logout">Log out</string>
+
+
+
+    <!-- Login and Create account -->
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="no_account_yet">No account yet?</string>
+    <string name="create_one">Create one</string>
+    <string name="sign_in_using">Sign in using</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="google">Google</string>
+    <string name="facebook">Facebook</string>
+    <string name="or">or</string>
+    <string name="email_required_error">Please input your email address.</string>
+    <string name="email_format_error">Invalid email address format.</string>
+    <string name="email_invalid_error">Email address does not exist or is invalid.</string>
+    <string name="password_required_error">Please input your password.</string>
+    <string name="password_wrong_error">Password is incorrect or invalid.</string>
+    <string name="auth_failed">Authentication failed.</string>
+    <string name="sign_in_msg">Click here to sign in</string>
+    <string name="create_failed">Could not create account.</string>
+    <string name="passwords_not_match">Passwords don\'t match</string>
+    <string name="email_duplicated">This email already have an account registered.</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_later">Sign in later</string>
+    <string name="sign_up_later">Sign up later</string>
+    <string name="sign_up">Sign up</string>
+
 </resources>

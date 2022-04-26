@@ -1,4 +1,4 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -6,46 +6,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
-import android.net.wifi.SupplicantState;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
-import android.view.View;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.KeyStore;
-import java.security.PublicKey;
-import java.security.cert.CertPath;
-import java.security.cert.CertPathValidator;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.PKIXCertPathValidatorResult;
-import java.security.cert.PKIXParameters;
-import java.security.cert.TrustAnchor;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
+import com.google.android.material.appbar.MaterialToolbar;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "SmartLock@MainActivity";
+
+    Sidebar sidebar;
+
 
     ActivityResultLauncher<String[]> locationPermissionRequest =
             registerForActivityResult(new ActivityResultContracts
@@ -67,8 +40,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Utils.forceLightModeOn();
 
         setContentView(R.layout.activity_main);
+
+        // Set sidebar
+        sidebar = new Sidebar(this);
 
         if (!gotLocationPermission()) {
             requestLocationPermission();
@@ -104,7 +81,22 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(getApplicationContext(), MessagesTestActivity.class);
             startActivity(intent);
         });
+
+        // Set menu click listener for sidebar opening/closing
+        MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar());
+
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        sidebar.changeUserUI();
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sidebar.changeUserUI();
+    }
 }

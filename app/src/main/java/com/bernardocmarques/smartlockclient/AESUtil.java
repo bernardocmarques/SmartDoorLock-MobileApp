@@ -1,10 +1,9 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
 
 import android.util.Base64;
 import android.util.Log;
 
-import java.lang.reflect.Array;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;

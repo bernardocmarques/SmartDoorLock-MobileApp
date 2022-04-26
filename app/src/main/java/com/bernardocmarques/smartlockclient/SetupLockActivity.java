@@ -1,17 +1,13 @@
-package com.example.smartlockclient;
+package com.bernardocmarques.smartlockclient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -23,7 +19,6 @@ import com.espressif.iot.esptouch2.provision.EspProvisioningListener;
 import com.espressif.iot.esptouch2.provision.EspProvisioningRequest;
 import com.espressif.iot.esptouch2.provision.EspProvisioningResult;
 import com.espressif.iot.esptouch2.provision.EspSyncListener;
-import com.espressif.iot.esptouch2.provision.TouchNetUtil;
 
 public class SetupLockActivity extends AppCompatActivity {
 
@@ -42,6 +37,7 @@ public class SetupLockActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup_lock);
+        Utils.forceLightModeOn();
 
         ssidTextView = findViewById(R.id.text_view_ssid_value);
         bssidTextView = findViewById(R.id.text_view_bssid_value);

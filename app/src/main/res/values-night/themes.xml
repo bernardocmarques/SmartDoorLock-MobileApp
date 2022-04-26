@@ -16,6 +16,10 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="ToolbarTitle" >
+        <item name="android:textSize">16sp</item>
+    </style>
+
     <style name="BLESwitch" parent="Theme.MaterialComponents.DayNight">
         ...
         <item name="colorSecondary">@color/blue_bluetooth</item>

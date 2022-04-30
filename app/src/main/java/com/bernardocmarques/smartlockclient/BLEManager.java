@@ -87,9 +87,9 @@ public class BLEManager {
     }
 
     public String generateAuthCredentials(String seed) {
-        String userId = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
-        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, keyID + userId);
-        return "SAC " + userId + " " + authCode;
+        String username = GlobalValues.getInstance().getCurrentUsername();
+        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, keyID + username);
+        return "SAC " + username + " " + authCode;
     }
 
 

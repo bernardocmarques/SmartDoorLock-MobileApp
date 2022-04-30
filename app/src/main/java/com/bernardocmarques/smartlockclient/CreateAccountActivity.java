@@ -134,6 +134,9 @@ public class CreateAccountActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
+
+                            Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));
+
                             finish();
                         } else {
                             Exception e = task.getException();

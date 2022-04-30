@@ -322,6 +322,45 @@ public class Utils {
     /*** --------------- Server Utils --------------- ***/
     /*** -------------------------------------------- ***/
 
+    public static void finishUserCreation(OnTaskCompleted<Boolean> callback) {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+
+            JsonObject data = new JsonObject();
+            data.addProperty("id_token", tokenId);
+
+
+            (new httpPostRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    callback.onTaskCompleted(true);
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                    callback.onTaskCompleted(false);
+                }
+            }, data.toString())).execute(SERVER_URL + "/finish-user-creation");
+        });
+    }
+
+    public static void getUsernameFromDatabase(OnTaskCompleted<String> callback) {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+            (new httpRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    String username = response.get("username").getAsString();
+                    callback.onTaskCompleted(username);
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                }
+            })).execute(SERVER_URL + "/get-username?id_token=" + tokenId);
+        });
+    }
+
     public static void getCertificateFromDatabase(String lock_id, OnTaskCompleted<X509Certificate> callback) {
         Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
@@ -352,6 +391,34 @@ public class Utils {
         getCertificateFromDatabase(lock_id, certificate -> {
             callback.onTaskCompleted(getPublicKeyBase64FromCertificate(certificate, context));
         });
+    }
+
+
+    public static void redeemInvite(String lockMAC, String inviteID, OnTaskCompleted<Boolean> callback) {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+            String username = GlobalValues.getInstance().getCurrentUsername();
+
+            String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + username);
+            Log.i(TAG, "redeemInvite: token " + tokenId);
+            JsonObject data = new JsonObject();
+            data.addProperty("id_token", tokenId);
+            data.addProperty("invite_id", inviteID);
+            data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
+
+            (new Utils.httpPostRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    callback.onTaskCompleted(true);
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                    callback.onTaskCompleted(false);
+                }
+            }, data.toString())).execute(SERVER_URL + "/redeem-invite");
+        });
+
     }
 
 

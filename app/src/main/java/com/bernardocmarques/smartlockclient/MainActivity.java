@@ -12,6 +12,12 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.PhoneAuthCredential;
+import com.google.firebase.auth.PhoneAuthOptions;
+import com.google.firebase.auth.UserProfileChangeRequest;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,7 +52,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Set sidebar
         sidebar = new Sidebar(this);
-        Utils.getPublicKeyBase64FromDatabase("7C:DF:A1:1A:0E:5A", this, key -> Log.i(TAG, key)); // todo remove hardcode
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));
+        }
 
         if (!gotLocationPermission()) {
             requestLocationPermission();

@@ -5,11 +5,16 @@ import static com.bernardocmarques.smartlockclient.Utils.SERVER_URL;
 import com.bernardocmarques.smartlockclient.Utils.KeyStoreUtil;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Toast;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.JsonObject;
@@ -35,9 +40,7 @@ public class RedeemInviteActivity extends AppCompatActivity {
 
         redeemInviteBtn.setOnClickListener(view -> {
 
-            String userId = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
-
-            String inviteCodeB64 = inviteCodeTextInputLayout.getEditText().getText().toString();
+            String inviteCodeB64 = Objects.requireNonNull(inviteCodeTextInputLayout.getEditText()).getText().toString();
             Log.i(TAG, "onCreate: inviteCodeB64 = " + inviteCodeB64);
 
             String[] inviteCode = new String(Base64.decode(inviteCodeB64, Base64.NO_WRAP)).split(" ");
@@ -49,24 +52,13 @@ public class RedeemInviteActivity extends AppCompatActivity {
             Log.i(TAG, "onCreate: invite id = " + inviteID);
 
 
-
-            String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + userId);
-
-            JsonObject data = new JsonObject();
-            data.addProperty("id_token", userId); //fixme remove hardcode
-            data.addProperty("invite_id", inviteID);
-            data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
-
-            (new Utils.httpPostRequestJson(response -> {
-                if (response.get("success").getAsBoolean()) {
-                    Log.i(TAG, "onCreate: YEI!!!");
-                } else {
-                    Log.e(TAG, "Error code " +
-                            response.get("code").getAsString() +
-                            ": " +
-                            response.get("msg").getAsString());
-                }
-            }, data.toString())).execute(SERVER_URL + "/redeem-invite");
+            Utils.redeemInvite(lockMAC, inviteID, success -> {
+                runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.smart_door_created_title)
+                        .setMessage(success ? R.string.smart_door_created_msg : R.string.smart_door_error_created_msg)
+                        .setPositiveButton(R.string.OK, (dialog, which) -> {})
+                        .show());
+            });
         });
 
     }

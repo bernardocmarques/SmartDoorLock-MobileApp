@@ -28,7 +28,7 @@ public class BLEManager {
     /* Testing variables */  // todo remove hardcode
 
     String rsaPubKey = Utils.rsaPubKey;
-    String keyID = "7C:DF:A1:1A:0E:5A";
+    String keyID = "7C:DF:A1:E1:5D:D0";
 
     /* Testing variables (end) */
 
@@ -41,7 +41,8 @@ public class BLEManager {
 
 
     public BluetoothLeService mBluetoothLeService;
-    public final String mDeviceAddress = "01:B6:EC:2A:C0:D9"; // fixme hardcoded while testing
+//    public final String mDeviceAddress = "01:B6:EC:2A:C0:D9"; // fixme hardcoded while testing
+    public final String mDeviceAddress = "7C:DF:A1:E1:5D:D2"; // fixme hardcoded while testing
 
     private BLEManager() { };
 

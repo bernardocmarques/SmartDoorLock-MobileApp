@@ -16,6 +16,7 @@
 
 package com.bernardocmarques.smartlockclient;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -43,7 +44,7 @@ import java.util.UUID;
  * Service for managing connection and data communication with a GATT server hosted on a
  * given Bluetooth LE device.
  */
-//@SuppressLint("MissingPermission")
+@SuppressLint("MissingPermission")
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class BluetoothLeService extends Service {
     private final static String TAG = "SmartLock@BLEService";
@@ -64,7 +65,8 @@ public class BluetoothLeService extends Service {
 
     private String pendingMsg = "";
 
-    private BluetoothGattCharacteristic terminalCharacteristic = null;
+    private BluetoothGattCharacteristic readCharacteristic = null;
+    private BluetoothGattCharacteristic writeCharacteristic = null;
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -118,14 +120,20 @@ public class BluetoothLeService extends Service {
             BluetoothGattService chatService = gatt.getService(UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb"));
             if (chatService != null) {
                 Log.i(TAG, "Found that service");
-                terminalCharacteristic = chatService.getCharacteristic(UUID.fromString("0000ffe1-0000-1000-8000-00805f9b34fb"));
-                if (terminalCharacteristic != null) {
+                writeCharacteristic = chatService.getCharacteristic(UUID.fromString("0000ffe1-0000-1000-8000-00805f9b34fb"));
+                readCharacteristic = chatService.getCharacteristic(UUID.fromString("0000ffe2-0000-1000-8000-00805f9b34fb"));
+
+                if (readCharacteristic == null) readCharacteristic = writeCharacteristic;
+
+                if (writeCharacteristic != null) {
                     Log.i(TAG, "Found that Characteristic");
-                    gatt.setCharacteristicNotification(terminalCharacteristic,true);
+                    gatt.setCharacteristicNotification(readCharacteristic,true);
 
                     if (!gatt.requestMtu(MAX_MTU))
                         Log.e(TAG, "request MTU failed");
                 }
+            } else {
+                Log.e(TAG, "Service not found! 0000ffe0-0000-1000-8000-00805f9b34fb");
             }
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -158,7 +166,7 @@ public class BluetoothLeService extends Service {
                 return;
             }
 
-            if(characteristic == terminalCharacteristic) { // NOPMD - test object identity
+            if(characteristic == writeCharacteristic) { // NOPMD - test object identity
                 Log.d(TAG,"write finished, status="+status);
                 writeNext();
             }
@@ -176,8 +184,8 @@ public class BluetoothLeService extends Service {
                 }
             }
             if(data != null) {
-                terminalCharacteristic.setValue(data);
-                if (!mBluetoothGatt.writeCharacteristic(terminalCharacteristic)) {
+                writeCharacteristic.setValue(data);
+                if (!mBluetoothGatt.writeCharacteristic(writeCharacteristic)) {
                     Log.e(TAG,"write failed");
                 } else {
                     Log.d(TAG,"write started, len="+data.length);
@@ -197,8 +205,8 @@ public class BluetoothLeService extends Service {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
 
-            if(characteristic == terminalCharacteristic) { // NOPMD - test object identity
-                byte[] data = terminalCharacteristic.getValue();
+            if(characteristic == readCharacteristic) { // NOPMD - test object identity
+                byte[] data = readCharacteristic.getValue();
                 Log.d(TAG,"read, len="+data.length);
             }
         }
@@ -207,8 +215,8 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
 
-            if(characteristic == terminalCharacteristic) { // NOPMD - test object identity
-                byte[] data = terminalCharacteristic.getValue();
+            if(characteristic == readCharacteristic) { // NOPMD - test object identity
+                byte[] data = readCharacteristic.getValue();
                 Log.d(TAG,"read, len="+data.length);
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
@@ -229,7 +237,7 @@ public class BluetoothLeService extends Service {
             return false;
         }
 
-        if (terminalCharacteristic == null) {
+        if (writeCharacteristic == null) {
             Log.e(TAG, "Error - Can't send message, characteristic not defined!");
             return false;
         }
@@ -262,8 +270,8 @@ public class BluetoothLeService extends Service {
             }
         }
         if(data0 != null) {
-            terminalCharacteristic.setValue(data0);
-            if (!mBluetoothGatt.writeCharacteristic(terminalCharacteristic)) {
+            writeCharacteristic.setValue(data0);
+            if (!mBluetoothGatt.writeCharacteristic(writeCharacteristic)) {
                 Log.e(TAG,"write failed");
                 return false;
             } else {
@@ -287,7 +295,7 @@ public class BluetoothLeService extends Service {
         final Intent intent = new Intent(action);
 
 
-        if (characteristic == terminalCharacteristic) {
+        if (characteristic == readCharacteristic) {
             final byte[] data = characteristic.getValue();
             if (data[data.length-1] != 4) {
                 pendingMsg += new String(data);

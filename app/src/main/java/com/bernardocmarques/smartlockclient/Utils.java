@@ -65,22 +65,6 @@ import javax.crypto.SecretKey;
 
 public class Utils {
 
-    /* Testing variables */ // todo remove
-
-    public static String rsaPubKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl4iRt8ORglI2tv0U3Dp2" +
-            "3Zyoc4bY0l414bNCK6TN1AXKXx6iQaiugnsFK84BhVtd6uNX/hMxsat+aZoJvPdM" +
-            "aY48U1DgAqBtFhSbXakyfghdk6VDVV6chQzrYzyvZ1eR7q0qfmf5w3Z02fSfI66E" +
-            "a8BAT1UpAEWdSU+xFlbRb9qsZYGV99+JjPC4PGhbHMOSsO+We4ZsP8UosNyF8A62" +
-            "FheFXimCujiPmOBIOablN9TuWXAUtNHhWf4EyYDQvEo/NfY2mleiYjKqHoJpkIu+" +
-            "sMcJJ3ry5Z4HEZi+SUbCjL7I5ZYF8aZq3YRxS4n2ZO7/w7n7B5621HMsahRNUi76" +
-            "1wIDAQAB";
-
-//    public static String userId = "user123";
-
-    /* Testing variables (end) */
-
-
-
     public static final long ONE_SECOND_IN_MILLIS = 1000; //millisecs
 
     public static int THUMBNAIL_SIZE_SMALL = 128;
@@ -394,29 +378,31 @@ public class Utils {
     }
 
 
-    public static void redeemInvite(String lockMAC, String inviteID, OnTaskCompleted<Boolean> callback) {
+    public static void redeemInvite(String lockMAC, String inviteID, Context context, OnTaskCompleted<Boolean> callback) {
         Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
             String username = GlobalValues.getInstance().getCurrentUsername();
 
-            String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + username);
-            Log.i(TAG, "redeemInvite: token " + tokenId);
-            JsonObject data = new JsonObject();
-            data.addProperty("id_token", tokenId);
-            data.addProperty("invite_id", inviteID);
-            data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
+            Utils.getPublicKeyBase64FromDatabase(lockMAC, context, keyRSA -> {
+                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + username, keyRSA);
+                Log.i(TAG, "redeemInvite: token " + tokenId);
+                JsonObject data = new JsonObject();
+                data.addProperty("id_token", tokenId);
+                data.addProperty("invite_id", inviteID);
+                data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
 
-            (new Utils.httpPostRequestJson(response -> {
-                if (response.get("success").getAsBoolean()) {
-                    callback.onTaskCompleted(true);
-                } else {
-                    Log.e(TAG, "Error code " +
-                            response.get("code").getAsString() +
-                            ": " +
-                            response.get("msg").getAsString());
-                    callback.onTaskCompleted(false);
-                }
-            }, data.toString())).execute(SERVER_URL + "/redeem-invite");
+                (new Utils.httpPostRequestJson(response -> {
+                    if (response.get("success").getAsBoolean()) {
+                        callback.onTaskCompleted(true);
+                    } else {
+                        Log.e(TAG, "Error code " +
+                                response.get("code").getAsString() +
+                                ": " +
+                                response.get("msg").getAsString());
+                        callback.onTaskCompleted(false);
+                    }
+                }, data.toString())).execute(SERVER_URL + "/redeem-invite");
+            });
         });
 
     }
@@ -449,7 +435,7 @@ public class Utils {
             return(INSTANCE);
         }
 
-        public String generateMasterKey(String keyID) {
+        public String generateMasterKey(String keyID, String rsaPubKey) {
 
             Log.i(TAG, "save key with id: " + keyID);
 

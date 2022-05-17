@@ -30,6 +30,8 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
 
     BLEManager bleManager;
 
+    RSAUtil rsaUtil;
+
     /* UI */
 
     Button openLockBtn;
@@ -107,6 +109,11 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
 
     public Activity getActivity() {
         return this;
+    }
+
+    @Override
+    public RSAUtil getRSAUtil() {
+        return rsaUtil;
     }
 
 
@@ -217,8 +224,10 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
-                updateUIOnBLEConnected();
-
+                Utils.getPublicKeyBase64FromDatabase(bleManager.keyID, getActivity(), rsaKey -> {
+                    rsaUtil = new RSAUtil(rsaKey);
+                    updateUIOnBLEConnected();
+                });
             }
         }
     };

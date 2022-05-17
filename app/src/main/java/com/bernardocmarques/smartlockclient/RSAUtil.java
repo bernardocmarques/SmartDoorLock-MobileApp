@@ -24,6 +24,18 @@ class RSAUtil {
 
     private static final String TAG = "SmartLock@RSAUtils";
 
+    private String rsaKey;
+    public RSAUtil() {}
+
+
+    public RSAUtil(String key) {
+        this.rsaKey = key;
+    }
+
+    String encrypt(String data) {
+        return encrypt(data, this.rsaKey);
+    }
+
     String encrypt(String data, String rsaPublicKeyString) {
 
         byte[] encryptedBytes = null;

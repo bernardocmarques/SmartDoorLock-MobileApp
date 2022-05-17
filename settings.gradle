@@ -1,2 +1,3 @@
 rootProject.name = "SmartLockClient"
 include ':app'
+

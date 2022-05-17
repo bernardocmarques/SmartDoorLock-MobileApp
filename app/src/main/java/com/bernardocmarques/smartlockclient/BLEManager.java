@@ -27,7 +27,6 @@ public class BLEManager {
 
     /* Testing variables */  // todo remove hardcode
 
-    String rsaPubKey = Utils.rsaPubKey;
     String keyID = "7C:DF:A1:E1:5D:D0";
 
     /* Testing variables (end) */
@@ -36,7 +35,6 @@ public class BLEManager {
 
 
     private AESUtil aes;
-    private RSAUtil rsa;
 
 
 
@@ -78,13 +76,11 @@ public class BLEManager {
     }
 
 
-    public String generateSessionCredentials() {
+    public String generateSessionCredentials(BLEActivity bleActivity) {
         this.aes = new AESUtil(KEY_SIZE);
-        this.rsa = new RSAUtil();
-
         String key = aes.generateNewSessionKey();
 
-        return rsa.encrypt("SSC " + key, rsaPubKey);
+        return bleActivity.getRSAUtil().encrypt("SSC " + key);
     }
 
     public String generateAuthCredentials(String seed) {
@@ -94,8 +90,8 @@ public class BLEManager {
     }
 
 
-    public void sendCommandWithAuthentication(BLEActivity bleActivity,String cmd, BLEManager.OnResponseReceived callback) {
-        sendCommandAndReceiveResponse(bleActivity, generateSessionCredentials(), false,
+    public void sendCommandWithAuthentication(BLEActivity bleActivity, String cmd, BLEManager.OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(bleActivity, generateSessionCredentials(bleActivity), false,
                 responseSplitSSC -> {
                     if (responseSplitSSC[0].equals("RAC")) {
 
@@ -186,10 +182,12 @@ public class BLEManager {
     }
 
     public interface BLEActivity {
+
         void updateUIOnBLEDisconnected();
         void updateUIOnBLEConnected();
 
         Activity getActivity();
+        RSAUtil getRSAUtil();
     }
 
 }

@@ -52,7 +52,7 @@ public class RedeemInviteActivity extends AppCompatActivity {
             Log.i(TAG, "onCreate: invite id = " + inviteID);
 
 
-            Utils.redeemInvite(lockMAC, inviteID, success -> {
+            Utils.redeemInvite(lockMAC, inviteID,this , success -> {
                 runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.smart_door_created_title)
                         .setMessage(success ? R.string.smart_door_created_msg : R.string.smart_door_error_created_msg)

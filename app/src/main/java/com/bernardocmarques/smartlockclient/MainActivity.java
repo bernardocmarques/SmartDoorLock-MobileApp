@@ -2,6 +2,7 @@ package com.bernardocmarques.smartlockclient;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -16,6 +17,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.util.Objects;
 
@@ -44,6 +47,16 @@ public class MainActivity extends AppCompatActivity {
             );
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        IntentResult result = IntentIntegrator.parseActivityResult(resultCode, data);
+        if (result != null) {
+            Log.i(TAG, "onActivityResult: " + result.getContents());
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Utils.forceLightModeOn();
@@ -52,6 +65,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Set sidebar
         sidebar = new Sidebar(this);
+
+//        IntentIntegrator intentIntegrator = new IntentIntegrator(this);
+//        intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+//        intentIntegrator.initiateScan();
 
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));

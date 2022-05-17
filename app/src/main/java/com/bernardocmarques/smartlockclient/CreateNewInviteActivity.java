@@ -29,6 +29,7 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
     private static final String TAG = "SmartLock@CreateNewInvite";
 
     BLEManager bleManager;
+    RSAUtil rsaUtil;
 
     /* UI */
     AutoCompleteTextView userTypeSelect;
@@ -53,7 +54,11 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
         bleManager = BLEManager.getInstance();
 
-        createUI();
+        Utils.getPublicKeyBase64FromDatabase(bleManager.keyID, this, keyRSA -> {
+            this.rsaUtil = new RSAUtil(keyRSA);
+            createUI();
+
+        });
     }
 
 
@@ -234,5 +239,10 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
     @Override
     public Activity getActivity() {
         return this;
+    }
+
+    @Override
+    public RSAUtil getRSAUtil() {
+        return rsaUtil;
     }
 }

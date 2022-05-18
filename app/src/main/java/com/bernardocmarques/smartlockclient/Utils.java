@@ -307,7 +307,7 @@ public class Utils {
     /*** -------------------------------------------- ***/
 
     public static void finishUserCreation(OnTaskCompleted<Boolean> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
 
             JsonObject data = new JsonObject();
@@ -329,7 +329,7 @@ public class Utils {
     }
 
     public static void getUsernameFromDatabase(OnTaskCompleted<String> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
             (new httpRequestJson(response -> {
                 if (response.get("success").getAsBoolean()) {
@@ -346,7 +346,7 @@ public class Utils {
     }
 
     public static void getCertificateFromDatabase(String lock_id, OnTaskCompleted<X509Certificate> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
             (new httpRequestJson(response -> {
                 if (response.get("success").getAsBoolean()) {
@@ -379,7 +379,7 @@ public class Utils {
 
 
     public static void redeemInvite(String lockMAC, String inviteID, Context context, OnTaskCompleted<Boolean> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(true).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
             String username = GlobalValues.getInstance().getCurrentUsername();
 

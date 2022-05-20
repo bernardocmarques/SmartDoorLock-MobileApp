@@ -26,10 +26,14 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import androidx.annotation.RequiresApi;
 
@@ -54,6 +58,7 @@ public class BluetoothLeService extends Service {
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothLeScanner bluetoothLeScanner;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private int mConnectionState = STATE_DISCONNECTED;
@@ -365,6 +370,8 @@ public class BluetoothLeService extends Service {
             return false;
         }
 
+        bluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+
         return true;
     }
 
@@ -482,4 +489,40 @@ public class BluetoothLeService extends Service {
 
         return mBluetoothGatt.getServices();
     }
+
+
+    private boolean scanning;
+    private Handler handler = new Handler();
+
+    // Stops scanning after 10 seconds.
+    private static final long SCAN_PERIOD = 10000;
+
+    public void scanLeDevice() {
+        Log.i(TAG, "scanLeDevice: Start scanning.");
+        if (!scanning) {
+            // Stops scanning after a predefined scan period.
+            handler.postDelayed(() -> {
+                scanning = false;
+                bluetoothLeScanner.stopScan(leScanCallback);
+            }, SCAN_PERIOD);
+
+            scanning = true;
+            bluetoothLeScanner.startScan(leScanCallback);
+        } else {
+            scanning = false;
+            bluetoothLeScanner.stopScan(leScanCallback);
+        }
+    }
+
+
+    // Device scan callback.
+    private final ScanCallback leScanCallback =
+        new ScanCallback() {
+            @Override
+            public void onScanResult(int callbackType, ScanResult result) {
+                super.onScanResult(callbackType, result);
+
+                Log.i(TAG, "onScanResult: " + result.getDevice() + " - " + result.getDevice().getName());
+            }
+        };
 }

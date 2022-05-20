@@ -1,18 +1,12 @@
 package com.bernardocmarques.smartlockclient;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -40,24 +34,6 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
     Button redeemInviteBtn;
     SwitchMaterial bleConnectedSwitch;
 
-    ActivityResultLauncher<String[]> bluetoothPermissionRequest =
-            registerForActivityResult(new ActivityResultContracts
-                            .RequestMultiplePermissions(), result -> {
-                Boolean granted;
-                if (android.os.Build.VERSION.SDK_INT >= 31) {
-                    granted = result.getOrDefault(
-                            Manifest.permission.BLUETOOTH_CONNECT,false);
-                } else {
-                    granted = true;
-                }
-
-                if (granted != null && granted) {
-                    createUIListeners();
-                } else {
-                    Log.e(TAG, "Bluetooth Permission Denied. Cant continue");
-                    requestBluetoothPermission();
-                }
-            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,22 +43,18 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
 
         bleManager = BLEManager.getInstance();
 
-        if (!gotBluetoothPermission()) {
-            requestBluetoothPermission();
-        } else {
-            openLockBtn = findViewById(R.id.btn_open_lock);
-            closeLockBtn = findViewById(R.id.btn_close_lock);
-            createNewInviteBtn = findViewById(R.id.btn_create_new_invite);
-            redeemInviteBtn = findViewById(R.id.btn_redeem_invite);
-            bleConnectedSwitch = findViewById(R.id.switch_connected);
 
-            updateUIOnBLEDisconnected();
-            bleConnectedSwitch.setText(R.string.BLE_CONNECTING);
+        openLockBtn = findViewById(R.id.btn_open_lock);
+        closeLockBtn = findViewById(R.id.btn_close_lock);
+        createNewInviteBtn = findViewById(R.id.btn_create_new_invite);
+        redeemInviteBtn = findViewById(R.id.btn_redeem_invite);
+        bleConnectedSwitch = findViewById(R.id.switch_connected);
 
-            bindToBLEService();
-            createUIListeners();
-        }
+        updateUIOnBLEDisconnected();
+        bleConnectedSwitch.setText(R.string.BLE_CONNECTING);
 
+        bleManager.bindToBLEService(this);
+        createUIListeners();
 
     }
 
@@ -94,6 +66,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         closeLockBtn.setEnabled(false);
         createNewInviteBtn.setEnabled(false);
         redeemInviteBtn.setEnabled(false);
+
     }
 
     public void updateUIOnBLEConnected() {
@@ -104,6 +77,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         closeLockBtn.setEnabled(true);
         createNewInviteBtn.setEnabled(true);
         redeemInviteBtn.setEnabled(true);
+        bleManager.scanDevices();
 
     }
 
@@ -120,11 +94,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-        if (bleManager.mBluetoothLeService != null && !bleManager.mBluetoothLeService.isConnected()) {
-            final boolean result = bleManager.mBluetoothLeService.connect(bleManager.mDeviceAddress);
-            Log.d(TAG, "Connect request result=" + result);
-        }
+        bleManager.onResume(this, mGattUpdateReceiver);
     }
 
 
@@ -142,12 +112,8 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
     }
 
 
-    void bindToBLEService() {
-        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, bleManager.mServiceConnection, BIND_AUTO_CREATE);
-    }
-
     void createUIListeners() {
+
         openLockBtn.setOnClickListener(view -> {
             openDoorCommunication();
         });
@@ -178,33 +144,8 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         });
     }
 
-    boolean gotBluetoothPermission() {
-        if (Build.VERSION.SDK_INT >= 31) {
-            return ContextCompat.checkSelfPermission(
-                    getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) ==
-                    PackageManager.PERMISSION_GRANTED;
-        } else {
-            return true;
-        }
-    }
 
-    void requestBluetoothPermission() {
-        if (Build.VERSION.SDK_INT >= 31) {
-            bluetoothPermissionRequest.launch(new String[] {
-                    Manifest.permission.BLUETOOTH_CONNECT
-            });
-        }
-    }
 
-    private static IntentFilter makeGattUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED);
-        return intentFilter;
-    }
 
     // Handles various events fired by the Service.
     // ACTION_GATT_CONNECTED: connected to a GATT server.
@@ -224,7 +165,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
-                Utils.getPublicKeyBase64FromDatabase(bleManager.keyID, getActivity(), rsaKey -> {
+                Utils.getPublicKeyBase64FromDatabase(bleManager.lockMAC, getActivity(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
                     updateUIOnBLEConnected();
                 });

@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -38,13 +39,50 @@ public class MainActivity extends AppCompatActivity {
                                 Manifest.permission.ACCESS_COARSE_LOCATION,false);
                         if ((fineLocationGranted != null && fineLocationGranted) ||
                                 (coarseLocationGranted != null && coarseLocationGranted)) {
-                            createUIListeners();
+                            initBluetooth();
                         } else {
                             Log.e(TAG, "Location Permission Denied. Cant continue");
                             requestLocationPermission();
                         }
                     }
             );
+
+    ActivityResultLauncher<String[]> bluetoothPermissionRequest =
+            registerForActivityResult(new ActivityResultContracts
+                    .RequestMultiplePermissions(), result -> {
+                Boolean granted;
+                if (android.os.Build.VERSION.SDK_INT >= 31) {
+                    granted = result.getOrDefault(
+                            Manifest.permission.BLUETOOTH_CONNECT,false);
+                } else {
+                    granted = true;
+                }
+
+                if (granted != null && granted) {
+                    createUIListeners();
+                } else {
+                    Log.e(TAG, "Bluetooth Permission Denied. Cant continue");
+                    requestBluetoothPermission();
+                }
+            });
+
+    boolean gotBluetoothPermission() {
+        if (Build.VERSION.SDK_INT >= 31) {
+            return ContextCompat.checkSelfPermission(
+                    getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) ==
+                    PackageManager.PERMISSION_GRANTED;
+        } else {
+            return true;
+        }
+    }
+
+    void requestBluetoothPermission() {
+        if (Build.VERSION.SDK_INT >= 31) {
+            bluetoothPermissionRequest.launch(new String[] {
+                    Manifest.permission.BLUETOOTH_CONNECT
+            });
+        }
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -76,6 +114,14 @@ public class MainActivity extends AppCompatActivity {
 
         if (!gotLocationPermission()) {
             requestLocationPermission();
+        } else {
+            initBluetooth();
+        }
+    }
+
+    void initBluetooth() {
+        if (!gotBluetoothPermission()) {
+            requestBluetoothPermission();
         } else {
             createUIListeners();
         }

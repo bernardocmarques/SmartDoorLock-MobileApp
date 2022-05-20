@@ -1,5 +1,6 @@
 package com.bernardocmarques.smartlockclient;
 
+import static android.content.Context.BIND_AUTO_CREATE;
 import static com.bernardocmarques.smartlockclient.BluetoothLeService.EXTRA_DATA;
 import static java.lang.Long.parseLong;
 
@@ -14,10 +15,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
-
 import java.util.Arrays;
-import java.util.Objects;
 
 public class BLEManager {
 
@@ -27,7 +25,7 @@ public class BLEManager {
 
     /* Testing variables */  // todo remove hardcode
 
-    String keyID = "7C:DF:A1:E1:5D:D0";
+    String lockMAC = "7C:DF:A1:E1:5D:D0";
 
     /* Testing variables (end) */
 
@@ -50,6 +48,30 @@ public class BLEManager {
             INSTANCE = new BLEManager();
         }
         return(INSTANCE);
+    }
+
+
+    void bindToBLEService(BLEActivity bleActivity) {
+        Intent gattServiceIntent = new Intent(bleActivity.getActivity(), BluetoothLeService.class);
+        bleActivity.getActivity().bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+    }
+
+    public void onResume(BLEActivity bleActivity, BroadcastReceiver mGattUpdateReceiver) {
+        bleActivity.getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+        if (mBluetoothLeService != null && !mBluetoothLeService.isConnected()) {
+            final boolean result = mBluetoothLeService.connect(mDeviceAddress);
+            Log.d(TAG, "Connect request result=" + result);
+        }
+    }
+
+    private static IntentFilter makeGattUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED);
+        return intentFilter;
     }
 
 
@@ -85,8 +107,21 @@ public class BLEManager {
 
     public String generateAuthCredentials(String seed) {
         String username = GlobalValues.getInstance().getCurrentUsername();
-        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, keyID + username);
+        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, lockMAC + username);
         return "SAC " + username + " " + authCode;
+    }
+
+    public void sendRequestFirstInvite(BLEActivity bleActivity, BLEManager.OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(bleActivity, generateSessionCredentials(bleActivity), false,
+                responseSplitSSC -> {
+                    if (responseSplitSSC[0].equals("ACK")) {
+
+                        sendCommandAndReceiveResponse(bleActivity, "RFI " + GlobalValues.getInstance().getCurrentUsername(), callback);
+
+                    } else { // command not ACK
+                        Log.e(TAG, "Error: Should have received ACK command");
+                    }
+                });
     }
 
 
@@ -116,7 +151,7 @@ public class BLEManager {
         sendCommandAndReceiveResponse(bleActivity, cmd,true, callback);
     }
 
-    void sendCommandAndReceiveResponse(BLEActivity bleActivity, String cmd, boolean encrypt, OnResponseReceived callback) {
+    public void sendCommandAndReceiveResponse(BLEActivity bleActivity, String cmd, boolean encrypt, OnResponseReceived callback) {
         String msgEnc;
         Activity activity = bleActivity.getActivity();
 
@@ -188,6 +223,10 @@ public class BLEManager {
 
         Activity getActivity();
         RSAUtil getRSAUtil();
+    }
+
+    public void scanDevices() {
+        mBluetoothLeService.scanLeDevice();
     }
 
 }

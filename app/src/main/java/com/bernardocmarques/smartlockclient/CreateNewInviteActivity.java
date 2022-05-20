@@ -54,10 +54,9 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
         bleManager = BLEManager.getInstance();
 
-        Utils.getPublicKeyBase64FromDatabase(bleManager.keyID, this, keyRSA -> {
+        Utils.getPublicKeyBase64FromDatabase(bleManager.lockMAC, this, keyRSA -> {
             this.rsaUtil = new RSAUtil(keyRSA);
             createUI();
-
         });
     }
 

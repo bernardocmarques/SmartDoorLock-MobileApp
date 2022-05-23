@@ -2,6 +2,7 @@ package com.bernardocmarques.smartlockclient;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -12,23 +13,28 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridLayout;
+import android.widget.TextView;
 
+import com.google.android.flexbox.FlexboxLayout;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.PhoneAuthCredential;
-import com.google.firebase.auth.PhoneAuthOptions;
-import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "SmartLock@MainActivity";
 
     Sidebar sidebar;
-
 
     ActivityResultLauncher<String[]> locationPermissionRequest =
             registerForActivityResult(new ActivityResultContracts
@@ -104,10 +110,6 @@ public class MainActivity extends AppCompatActivity {
         // Set sidebar
         sidebar = new Sidebar(this);
 
-//        IntentIntegrator intentIntegrator = new IntentIntegrator(this);
-//        intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
-//        intentIntegrator.initiateScan();
-
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
             Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));
         }
@@ -145,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void createUIListeners() {
+        loadUserLocks();
         findViewById(R.id.btn_setup_lock).setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), SetupLockActivity.class);
             startActivity(intent);
@@ -156,8 +159,46 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Set menu click listener for sidebar opening/closing
-        MaterialToolbar toolbar = findViewById(R.id.map_toolbar).findViewById(R.id.topAppBar);
+        MaterialToolbar toolbar = findViewById(R.id.main_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar());
+
+    }
+
+    private void loadUserLocks() {
+
+        Utils.getUserLocks(locks -> {
+            FlexboxLayout lockCardsFlexbox = findViewById(R.id.lock_card_flexbox);
+            LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
+
+            FlexboxLayout.LayoutParams params = new FlexboxLayout.LayoutParams(FlexboxLayout.LayoutParams.WRAP_CONTENT, FlexboxLayout.LayoutParams.WRAP_CONTENT);
+            params.setMargins(50, 50,50,50); // fixme set to dp
+
+            for (Lock lock: locks) {
+
+                View lockCard = inflater.inflate(R.layout.lock_card, lockCardsFlexbox, false);
+
+                TextView textView = lockCard.findViewById(R.id.lock_card_text_view);
+                textView.setText(lock.getName());
+
+                lockCardsFlexbox.addView(lockCard,  params);
+
+            }
+
+            int remainder = locks.size() % 3;
+
+            if (remainder != 0) {
+                for (int i = 0; i < 3 - remainder; i++) {
+                    View filler = inflater.inflate(R.layout.lock_card, lockCardsFlexbox, false);
+                    filler.setClickable(false);
+                    filler.setVisibility(View.INVISIBLE);
+                    lockCardsFlexbox.addView(filler,  params);
+                }
+            }
+        });
+
+
+
+
 
     }
 

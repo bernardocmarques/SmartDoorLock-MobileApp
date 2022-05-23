@@ -12,6 +12,7 @@ import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,6 +25,8 @@ import com.espressif.iot.esptouch2.provision.EspProvisioningListener;
 import com.espressif.iot.esptouch2.provision.EspProvisioningRequest;
 import com.espressif.iot.esptouch2.provision.EspProvisioningResult;
 import com.espressif.iot.esptouch2.provision.EspSyncListener;
+
+import java.util.Objects;
 
 public class SetupLockActivity extends AppCompatActivity implements BLEManager.BLEActivity {
 
@@ -109,29 +112,32 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
 
 
     void requestFirstInvite() {
-        Log.i(TAG, "requestFirstInvite: Chega");
-
-
         bleManager.sendRequestFirstInvite(this, (responseSplit -> {
 
             if (responseSplit[0].equals("SFI")) {
-                String inviteCode = responseSplit[1];
-                Log.i(TAG, "Invite: " + inviteCode);
+                String inviteCodeB64 = responseSplit[1];
+                Log.i(TAG, "Invite: " + inviteCodeB64);
 
-                runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.invite_create_title)
-                        .setMessage(inviteCode)
-                        .setPositiveButton(R.string.COPY_TO_CLIPBOARD, (dialog, which) -> {
+                Log.i(TAG, "onCreate: inviteCodeB64 = " + inviteCodeB64);
 
-                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                            ClipData clip = ClipData.newPlainText("Invite id", inviteCode);
-                            clipboard.setPrimaryClip(clip);
-                            Toast.makeText(getApplicationContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
-                            bleManager.mBluetoothLeService.disconnect();
+                String[] inviteCode = new String(Base64.decode(inviteCodeB64, Base64.NO_WRAP)).split(" ");
 
-                        })
-                        .setNegativeButton(R.string.CLOSE, (dialog, which) -> {})
-                        .show());
+                String lockMAC = inviteCode[0];
+                Log.i(TAG, "onCreate: lockMAC = " + lockMAC);
+
+                String inviteID = inviteCode[1];
+                Log.i(TAG, "onCreate: invite id = " + inviteID);
+
+
+                Utils.redeemInvite(lockMAC, inviteID,this , success -> {
+                    runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.smart_door_created_title)
+                            .setMessage(success ? R.string.smart_door_created_msg : R.string.smart_door_error_created_msg)
+                            .setPositiveButton(R.string.OK, (dialog, which) -> {finish();})
+                            .show());
+                });
+
+
             } else { // command not SNI
                 Log.e(TAG, "Error: Should have received SNI command. (After RNI)");
             }
@@ -151,12 +157,10 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
-                Log.i(TAG, "onReceive: Chega aqui");
 
                 Utils.getPublicKeyBase64FromDatabase(bleManager.lockMAC, getActivity(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
                     updateUIOnBLEConnected();
-                    Log.i(TAG, "onReceive: Chega aqui 2");
                     requestFirstInvite();
                 });
             }

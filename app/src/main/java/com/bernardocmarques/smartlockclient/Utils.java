@@ -19,6 +19,8 @@ import com.google.android.gms.common.util.IOUtils;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -47,6 +49,7 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -405,6 +408,31 @@ public class Utils {
             });
         });
 
+    }
+
+    public static void getUserLocks(OnTaskCompleted<ArrayList<Lock>> callback) {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+            (new httpRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    JsonArray jsonArray = response.get("locks").getAsJsonArray();
+
+                    ArrayList<Lock> locks = new ArrayList<>();
+
+                    for (JsonElement json : jsonArray) {
+                        locks.add(Lock.fromJson(json.getAsJsonObject()));
+                    }
+
+
+                    callback.onTaskCompleted(locks);
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                }
+            })).execute(SERVER_URL + "/get-user-locks?id_token=" + tokenId);
+        });
     }
 
 

@@ -8,11 +8,76 @@
 
 
     <include
-        android:id="@+id/map_toolbar"
+        android:id="@+id/main_toolbar"
         layout="@layout/main_action_bar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        />
 
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/lock_card_flexbox"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
+        app:alignContent="flex_start"
+        app:alignItems="flex_start"
+        app:flexWrap="wrap"
+        android:paddingTop="10dp"
+        app:justifyContent="space_evenly">
+
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="10dp"/>-->
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="10dp"/>-->
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="10dp"/>-->
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="10dp"/>-->
+
+
+
+    </com.google.android.flexbox.FlexboxLayout>
+
+<!--    <GridLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:layout_marginTop="?attr/actionBarSize"-->
+<!--        android:columnCount="3"-->
+<!--        android:layout_marginHorizontal="10dp"-->
+<!--        android:paddingTop="10dp"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:useDefaultMargins="true">-->
+
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="100dp"-->
+<!--            android:layout_height="100dp"/>-->
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="100dp"-->
+<!--            android:layout_height="100dp"/>-->
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="100dp"-->
+<!--            android:layout_height="100dp"/>-->
+<!--        <include-->
+<!--            layout="@layout/lock_card"-->
+<!--            android:layout_width="100dp"-->
+<!--            android:layout_height="100dp"/>-->
+
+<!--    </GridLayout>-->
 
 
     <Button
@@ -44,13 +109,14 @@
         android:layout_width="match_parent"
         android:background="@color/darkTransparent"
         android:elevation="9dp"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        android:layout_marginStart="?attr/actionBarSize"/>
 
     <include
         android:id="@+id/sidebar_layout"
         layout="@layout/sidebar"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
 
 

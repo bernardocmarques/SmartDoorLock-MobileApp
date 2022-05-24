@@ -93,15 +93,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
 
-        IntentResult result = IntentIntegrator.parseActivityResult(resultCode, data);
-        if (result != null) {
-            Log.i(TAG, "onActivityResult: " + result.getContents());
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,6 +149,11 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_test_messages).setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), MessagesTestActivity.class);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btn_add_new_lock).setOnClickListener(v -> {
+            Intent intent = new Intent(getApplicationContext(), SetupNewLockActivity.class);
             startActivity(intent);
         });
 

@@ -19,7 +19,6 @@
     <string name="sidebar_logout">Log out</string>
 
 
-
     <!-- Login and Create account -->
     <string name="email">Email</string>
     <string name="password">Password</string>
@@ -48,5 +47,8 @@
     <string name="smart_door_created_title">New smart lock</string>
     <string name="smart_door_created_msg">New smart lock successfully created</string>
     <string name="smart_door_error_created_msg">Error creating new smart door, try again.</string>
+    <string name="read_qr_code_to_add_lock">Read QR Code to add lock</string>
+    <string name="scan_for_ble_devices">Scan for BLE devices</string>
+    <string name="add_new_smart_lock_title">Add new Smart Lock</string>
 
 </resources>

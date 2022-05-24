@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SetupNewLockActivity">
+
+    <include
+        android:id="@+id/action_bar_include"
+        layout="@layout/back_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/btn_read_qr_code"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="60dp"
+        android:backgroundTint="@color/blue_500"
+        android:elevation="0dp"
+        android:letterSpacing=".06"
+        android:text="@string/read_qr_code_to_add_lock"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        app:icon="@drawable/ic_round_qr_code_scanner_24"
+        app:iconTint="@color/white"
+        app:iconGravity="textStart"
+        app:layout_constraintBottom_toTopOf="@+id/divider"
+        app:layout_constraintTop_toBottomOf="@+id/action_bar_include" />
+
+    <RelativeLayout
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginTop="?attr/actionBarSize"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/divider_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="@string/or"
+            android:textAllCaps="true"
+            android:textColor="@color/material_on_surface_disabled" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="32dp"
+            android:layout_toStartOf="@id/divider_text"
+            android:alpha=".2"
+            android:background="@color/dark" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="32dp"
+            android:layout_toEndOf="@id/divider_text"
+            android:alpha=".2"
+            android:background="@color/dark" />
+
+    </RelativeLayout>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/btn_scan_ble_devices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="60dp"
+        android:backgroundTint="@color/blue_500"
+        android:elevation="0dp"
+        android:letterSpacing=".06"
+        android:text="@string/scan_for_ble_devices"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        app:icon="@drawable/ic_round_search_24"
+        app:iconGravity="textStart"
+        app:iconTint="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/divider"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -43,12 +43,19 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
 
     RSAUtil rsaUtil;
 
+    String lockId;
+    String lockBleAddress;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup_lock);
         Utils.forceLightModeOn();
+
+        Bundle bundle = getIntent().getExtras();
+        lockId = bundle.getString("lockId");
+        lockBleAddress = bundle.getString("lockBleAddress");
 
         bleManager = BLEManager.getInstance();
 
@@ -274,11 +281,11 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
 
     @Override
     public String getLockId() {
-        return "7C:DF:A1:E1:5D:D0"; // fixme change hardcode
+        return lockId;
     }
 
     @Override
     public String getLockBLE() {
-        return "7C:DF:A1:E1:5D:D2"; // fixme change hardcode
+        return lockBleAddress;
     }
 }

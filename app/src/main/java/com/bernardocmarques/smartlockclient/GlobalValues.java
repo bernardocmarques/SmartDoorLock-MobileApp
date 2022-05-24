@@ -1,5 +1,7 @@
 package com.bernardocmarques.smartlockclient;
 
+import java.util.HashMap;
+
 public class GlobalValues {
 
     static String TAG = "SmartLock@GlobalValues";
@@ -7,6 +9,7 @@ public class GlobalValues {
     private static GlobalValues INSTANCE = null;
 
     private String currentUsername = null;
+    private HashMap<String, Lock> userLocksMap = new HashMap<>();
 
     private GlobalValues() { };
 
@@ -24,5 +27,17 @@ public class GlobalValues {
 
     public void setCurrentUsername(String currentUsername) {
         this.currentUsername = currentUsername;
+    }
+
+    public Lock getUserLockById(String lockId) {
+        return userLocksMap.get(lockId);
+    }
+
+    public void addToUserLocksMap(Lock lock) {
+        this.userLocksMap.put(lock.getId(), lock);
+    }
+
+    public void clearUserLocksMap() {
+        this.userLocksMap = new HashMap<>();
     }
 }

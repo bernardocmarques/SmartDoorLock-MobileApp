@@ -4,8 +4,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/lock_card"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:clickable="true"
 
     app:strokeColor="@color/blue_500"
@@ -22,8 +22,9 @@
         <ImageView
             android:id="@+id/lock_card_image_view"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            app:srcCompat="@drawable/ic_baseline_account_circle_24"
+            android:layout_height="42dp"
+            app:srcCompat="@color/black"
+            app:tint="@color/black"
             android:scaleType="fitCenter"
             android:contentDescription=""/>
 
@@ -41,6 +42,7 @@
                 android:textAlignment="center"
                 android:textStyle="normal"
                 android:textSize="15sp"
+                android:layout_marginTop="8dp"
                 android:text="Home"
                 android:textAppearance="?attr/textAppearanceHeadline6"/>
 

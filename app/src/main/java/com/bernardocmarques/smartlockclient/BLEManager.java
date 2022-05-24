@@ -23,11 +23,6 @@ public class BLEManager {
 
     private static BLEManager INSTANCE = null;
 
-    /* Testing variables */  // todo remove hardcode
-
-    String lockMAC = "7C:DF:A1:E1:5D:D0";
-
-    /* Testing variables (end) */
 
     private static final int KEY_SIZE = 256;
 
@@ -37,10 +32,11 @@ public class BLEManager {
 
 
     public BluetoothLeService mBluetoothLeService;
-//    public final String mDeviceAddress = "01:B6:EC:2A:C0:D9"; // fixme hardcoded while testing
-    public final String mDeviceAddress = "7C:DF:A1:E1:5D:D2"; // fixme hardcoded while testing
+    public String mDeviceAddress;
 
-    private BLEManager() { };
+    //    public final String mDeviceAddress = "01:B6:EC:2A:C0:D9"; // fixme hardcoded while testing
+//    public final String mDeviceAddress = "7C:DF:A1:E1:5D:D2"; // fixme hardcoded while testing
+    private BLEManager() { }
 
 
     public static BLEManager getInstance() {
@@ -52,6 +48,7 @@ public class BLEManager {
 
 
     void bindToBLEService(BLEActivity bleActivity) {
+        mDeviceAddress = bleActivity.getLockBLE();
         Intent gattServiceIntent = new Intent(bleActivity.getActivity(), BluetoothLeService.class);
         bleActivity.getActivity().bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
@@ -105,9 +102,9 @@ public class BLEManager {
         return bleActivity.getRSAUtil().encrypt("SSC " + key);
     }
 
-    public String generateAuthCredentials(String seed) {
+    public String generateAuthCredentials(BLEActivity bleActivity, String seed) {
         String username = GlobalValues.getInstance().getCurrentUsername();
-        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, lockMAC + username);
+        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, bleActivity.getLockId() + username);
         return "SAC " + username + " " + authCode;
     }
 
@@ -130,7 +127,7 @@ public class BLEManager {
                 responseSplitSSC -> {
                     if (responseSplitSSC[0].equals("RAC")) {
 
-                        sendCommandAndReceiveResponse(bleActivity, generateAuthCredentials(responseSplitSSC[1]),
+                        sendCommandAndReceiveResponse(bleActivity, generateAuthCredentials(bleActivity, responseSplitSSC[1]),
                                 responseSplitSAC -> {
                                     if (responseSplitSAC[0].equals("ACK")) {
 
@@ -223,6 +220,9 @@ public class BLEManager {
 
         Activity getActivity();
         RSAUtil getRSAUtil();
+
+        String getLockId();
+        String getLockBLE();
     }
 
     public void scanDevices() {

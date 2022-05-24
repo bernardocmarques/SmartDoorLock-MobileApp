@@ -158,7 +158,7 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
 
-                Utils.getPublicKeyBase64FromDatabase(bleManager.lockMAC, getActivity(), rsaKey -> {
+                Utils.getPublicKeyBase64FromDatabase(getLockId(), getActivity(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
                     updateUIOnBLEConnected();
                     requestFirstInvite();
@@ -270,5 +270,15 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
     @Override
     public RSAUtil getRSAUtil() {
         return rsaUtil;
+    }
+
+    @Override
+    public String getLockId() {
+        return "7C:DF:A1:E1:5D:D0"; // fixme change hardcode
+    }
+
+    @Override
+    public String getLockBLE() {
+        return "7C:DF:A1:E1:5D:D2"; // fixme change hardcode
     }
 }

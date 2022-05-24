@@ -10,6 +10,8 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.flexbox.FlexboxLayout;
@@ -147,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void createUIListeners() {
-        loadUserLocks();
         findViewById(R.id.btn_setup_lock).setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), SetupLockActivity.class);
             startActivity(intent);
@@ -164,23 +166,45 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void loadUserLocks() {
+    public void loadUserLocks() {
+        FlexboxLayout lockCardsFlexbox = findViewById(R.id.lock_card_flexbox);
+        lockCardsFlexbox.removeAllViews();
+        GlobalValues.getInstance().clearUserLocksMap();
 
         Utils.getUserLocks(locks -> {
-            FlexboxLayout lockCardsFlexbox = findViewById(R.id.lock_card_flexbox);
+
             LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
 
+            final float scale = this.getResources().getDisplayMetrics().density;
+
             FlexboxLayout.LayoutParams params = new FlexboxLayout.LayoutParams(FlexboxLayout.LayoutParams.WRAP_CONTENT, FlexboxLayout.LayoutParams.WRAP_CONTENT);
-            params.setMargins(50, 50,50,50); // fixme set to dp
+            params.setMargins((int)(10 * scale), (int)(10 * scale),(int)(10 * scale),(int)(10 * scale));
 
             for (Lock lock: locks) {
+                GlobalValues.getInstance().addToUserLocksMap(lock);
 
                 View lockCard = inflater.inflate(R.layout.lock_card, lockCardsFlexbox, false);
+                lockCard.setVisibility(View.INVISIBLE);
 
                 TextView textView = lockCard.findViewById(R.id.lock_card_text_view);
                 textView.setText(lock.getName());
 
-                lockCardsFlexbox.addView(lockCard,  params);
+                lockCardsFlexbox.addView(lockCard, params);
+
+                (new Utils.httpRequestImage(bitmap -> {
+                    ImageView imageView = lockCard.findViewById(R.id.lock_card_image_view);
+                    imageView.setImageBitmap(bitmap);
+
+                    lockCard.setOnClickListener(view -> {
+                        Intent intent = new Intent(getApplicationContext(), MessagesTestActivity.class);
+                        intent.putExtra("lockId", lock.getId());
+                        startActivity(intent);
+                    });
+
+                    lockCard.setVisibility(View.VISIBLE);
+                })).execute(lock.getIconURL());
+
+
 
             }
 
@@ -196,16 +220,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
-
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         sidebar.changeUserUI();
+        loadUserLocks();
     }
 
     @Override

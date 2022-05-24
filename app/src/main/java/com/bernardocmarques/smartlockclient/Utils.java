@@ -3,6 +3,8 @@ package com.bernardocmarques.smartlockclient;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
 import android.icu.text.SimpleDateFormat;
 import android.os.AsyncTask;
 import android.security.keystore.KeyProperties;
@@ -14,6 +16,7 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+
 
 import com.google.android.gms.common.util.IOUtils;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -50,12 +53,14 @@ import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Observable;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -128,6 +133,7 @@ public class Utils {
         return sf.parse(dateStr);
 
     }
+
 
     /*** -------------------------------------------- ***/
     /*** ----------------- VALIDITY ----------------- ***/
@@ -213,6 +219,7 @@ public class Utils {
         }
     }
 
+
     public static class httpRequestImage extends AsyncTask<String, Void, Bitmap> {
 
         private final OnTaskCompleted<Bitmap> callback;
@@ -255,6 +262,7 @@ public class Utils {
             callback.onTaskCompleted(result);
         }
     }
+
 
     public static class httpPostRequestJson extends AsyncTask<String, Void, JsonObject> {
 
@@ -411,6 +419,10 @@ public class Utils {
     }
 
     public static void getUserLocks(OnTaskCompleted<ArrayList<Lock>> callback) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            callback.onTaskCompleted(new ArrayList<>());
+            return;
+        }
         Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
             (new httpRequestJson(response -> {

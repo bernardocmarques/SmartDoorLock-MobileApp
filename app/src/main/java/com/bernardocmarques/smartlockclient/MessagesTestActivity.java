@@ -26,6 +26,8 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
 
     RSAUtil rsaUtil;
 
+    Lock lock;
+
     /* UI */
 
     Button openLockBtn;
@@ -40,6 +42,10 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messages_test);
         Utils.forceLightModeOn();
+
+        Bundle bundle = getIntent().getExtras();
+        String lockId = bundle.getString("lockId");
+        this.lock = GlobalValues.getInstance().getUserLockById(lockId);
 
         bleManager = BLEManager.getInstance();
 
@@ -90,6 +96,16 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         return rsaUtil;
     }
 
+    @Override
+    public String getLockId() {
+        return lock.getId();
+    }
+
+    @Override
+    public String getLockBLE() {
+        return lock.getBleAddress();
+    }
+
 
     @Override
     protected void onResume() {
@@ -124,6 +140,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
 
         createNewInviteBtn.setOnClickListener(view -> {
             Intent intent = new Intent(getApplicationContext(), CreateNewInviteActivity.class);
+            intent.putExtra("lockId", lock.getId());
             startActivity(intent);
         });
 
@@ -165,7 +182,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
-                Utils.getPublicKeyBase64FromDatabase(bleManager.lockMAC, getActivity(), rsaKey -> {
+                Utils.getPublicKeyBase64FromDatabase(lock.getId(), getActivity(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
                     updateUIOnBLEConnected();
                 });

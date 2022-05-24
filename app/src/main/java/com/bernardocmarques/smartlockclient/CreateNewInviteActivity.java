@@ -43,7 +43,8 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
     UserType selectedUserType;
 
-    MessagesTestActivity messagesTestActivity;
+
+    Lock lock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +52,14 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
         setContentView(R.layout.activity_create_new_invite);
         Utils.forceLightModeOn();
 
+        Bundle bundle = getIntent().getExtras();
+        String lockId = bundle.getString("lockId");
+        this.lock = GlobalValues.getInstance().getUserLockById(lockId);
+
 
         bleManager = BLEManager.getInstance();
 
-        Utils.getPublicKeyBase64FromDatabase(bleManager.lockMAC, this, keyRSA -> {
+        Utils.getPublicKeyBase64FromDatabase(getLockId(), this, keyRSA -> {
             this.rsaUtil = new RSAUtil(keyRSA);
             createUI();
         });
@@ -243,5 +248,15 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
     @Override
     public RSAUtil getRSAUtil() {
         return rsaUtil;
+    }
+
+    @Override
+    public String getLockId() {
+        return lock.getId();
+    }
+
+    @Override
+    public String getLockBLE() {
+        return lock.getBleAddress();
     }
 }

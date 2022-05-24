@@ -19,13 +19,13 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Observable;
 
 public final class Sidebar {
 
     static String TAG = "SmartLock@Sidebar";
-
-
 
     private final Activity activity;
     private final NavigationView sidebar;
@@ -48,6 +48,11 @@ public final class Sidebar {
 
         if (id == R.id.sidebar_logout) {
             FirebaseAuth.getInstance().signOut();
+            GlobalValues.getInstance().clearUserLocksMap();
+            if (activity.getClass().equals(MainActivity.class)) {
+                ((MainActivity)activity).loadUserLocks();
+            }
+
             changeUserUI();
             return false;
 

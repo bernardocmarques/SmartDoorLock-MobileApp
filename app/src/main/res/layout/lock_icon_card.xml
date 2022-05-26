@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/lock_card"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    app:cardCornerRadius="15dp">
+
+    <LinearLayout
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- Media -->
+        <ImageView
+            android:id="@+id/lock_card_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:srcCompat="@color/black"
+            app:tint="@color/black"
+            android:scaleType="fitCenter"
+            android:contentDescription=""/>
+
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
+

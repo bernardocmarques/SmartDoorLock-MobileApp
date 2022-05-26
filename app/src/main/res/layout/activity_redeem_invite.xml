@@ -37,8 +37,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:text="@string/redeem_invite"
-        />
+        android:text="@string/redeem_invite_code" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

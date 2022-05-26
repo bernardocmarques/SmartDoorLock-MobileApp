@@ -57,8 +57,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Observable;
 import java.util.Set;
@@ -223,10 +225,12 @@ public class Utils {
     public static class httpRequestImage extends AsyncTask<String, Void, Bitmap> {
 
         private final OnTaskCompleted<Bitmap> callback;
+        private final Cache cache;
 
 
         public httpRequestImage(OnTaskCompleted<Bitmap> callback) {
             this.callback = callback;
+            this.cache = Cache.getInstanceBigFiles();
         }
 
         @Override
@@ -236,6 +240,12 @@ public class Utils {
         @Override
         protected Bitmap doInBackground(String[] urls) {
             URL url;
+
+            byte[] cachedValue = cache.get(urls[0]);
+
+            if (cachedValue != null && cachedValue.length > 0) {
+                return BitmapFactory.decodeByteArray(cachedValue, 0, cachedValue.length);
+            }
 
             try {
                 url = new URL(urls[0]);
@@ -249,10 +259,19 @@ public class Utils {
 
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
+                cache.save(urls[0], bytes);
+
+
                 return bitmap;
 
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
+
+                cachedValue = cache.get(urls[0]);
+
+                if (cachedValue != null && cachedValue.length > 0) {
+                    return BitmapFactory.decodeByteArray(cachedValue, 0, cachedValue.length);
+                }
             }
             return null;
         }
@@ -445,6 +464,59 @@ public class Utils {
                 }
             })).execute(SERVER_URL + "/get-user-locks?id_token=" + tokenId);
         });
+    }
+
+    public static void setUserLock(Lock lock, OnTaskCompleted<Boolean> callback) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            callback.onTaskCompleted(false);
+            return;
+        }
+
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+
+            JsonObject data = new JsonObject();
+            data.addProperty("id_token", tokenId);
+            data.add("lock", lock.toJson());
+
+            (new httpPostRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    callback.onTaskCompleted(true);
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                }
+            }, data.toString())).execute(SERVER_URL + "/set-user-locks");
+        });
+    }
+
+    public static void getAllIcons(OnTaskCompleted<HashMap<String, Bitmap>> callback) {
+        (new httpRequestJson(response -> {
+            if (response.get("success").getAsBoolean()) {
+                JsonArray jsonArray = response.get("icons").getAsJsonArray();
+                HashMap<String, Bitmap> icons = new HashMap<>();
+
+                for (JsonElement json : jsonArray) {
+                    String iconId = json.getAsString();
+
+                    (new httpRequestImage(bitmap -> {
+                        icons.put(iconId, bitmap);
+
+                        if (icons.size() == jsonArray.size()) {
+                            callback.onTaskCompleted(icons);
+                        }
+                    })).execute(SERVER_URL + "/get-icon?icon_id=" + iconId);
+                }
+
+            } else {
+                Log.e(TAG, "Error code " +
+                        response.get("code").getAsString() +
+                        ": " +
+                        response.get("msg").getAsString());
+            }
+        })).execute(SERVER_URL + "/get-all-icons");
     }
 
 

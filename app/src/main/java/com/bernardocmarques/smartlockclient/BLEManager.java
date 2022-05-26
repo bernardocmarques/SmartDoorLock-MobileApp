@@ -117,6 +117,9 @@ public class BLEManager {
 
                     } else { // command not ACK
                         Log.e(TAG, "Error: Should have received ACK command");
+
+                        String[] res = {"NAK"};
+                        callback.onResponseReceived(res);
                     }
                 });
     }

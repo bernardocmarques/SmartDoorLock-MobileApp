@@ -28,6 +28,9 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:icon,android:theme">
         <activity
+            android:name=".EditDoorInformationActivity"
+            android:exported="false" />
+        <activity
             android:name=".SetupNewLockActivity"
             android:exported="false" />
         <activity

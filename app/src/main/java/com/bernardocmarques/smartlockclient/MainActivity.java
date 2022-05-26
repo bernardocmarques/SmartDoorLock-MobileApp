@@ -14,6 +14,7 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +26,7 @@ import android.widget.TextView;
 import com.google.android.flexbox.FlexboxLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -32,6 +34,8 @@ import com.google.zxing.integration.android.IntentResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -99,6 +103,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Utils.forceLightModeOn();
+
+        Cache.getInstanceBigFiles(getApplicationContext());
+        Cache.getInstanceSmallFiles(getApplicationContext());
 
         setContentView(R.layout.activity_main);
 
@@ -188,21 +195,28 @@ public class MainActivity extends AppCompatActivity {
 
                 lockCardsFlexbox.addView(lockCard, params);
 
-                (new Utils.httpRequestImage(bitmap -> {
-                    ImageView imageView = lockCard.findViewById(R.id.lock_card_image_view);
-                    imageView.setImageBitmap(bitmap);
 
-                    lockCard.setOnClickListener(view -> {
-                        Intent intent = new Intent(getApplicationContext(), MessagesTestActivity.class);
-                        intent.putExtra("lockId", lock.getId());
-                        startActivity(intent);
-                    });
+                new Timer().scheduleAtFixedRate(new TimerTask(){
+                    @Override
+                    public void run(){
 
-                    lockCard.setVisibility(View.VISIBLE);
-                })).execute(lock.getIconURL());
+                        Bitmap bitmap = lock.getIcon();
+                        if (bitmap != null) {
+                            ImageView imageView = lockCard.findViewById(R.id.lock_card_image_view);
+                            lockCard.setOnClickListener(view -> {
+                                Intent intent = new Intent(getApplicationContext(), MessagesTestActivity.class);
+                                intent.putExtra("lockId", lock.getId());
+                                startActivity(intent);
+                            });
+                            runOnUiThread(() -> {
+                                imageView.setImageBitmap(bitmap);
+                                lockCard.setVisibility(View.VISIBLE);
+                            });
 
-
-
+                            this.cancel();
+                        }
+                    }
+                },0,100);
             }
 
             int remainder = locks.size() % 3;

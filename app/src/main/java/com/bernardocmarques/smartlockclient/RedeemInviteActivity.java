@@ -1,23 +1,14 @@
 package com.bernardocmarques.smartlockclient;
 
-import static com.bernardocmarques.smartlockclient.Utils.SERVER_URL;
-
-import com.bernardocmarques.smartlockclient.Utils.KeyStoreUtil;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.gson.JsonObject;
 
 import java.util.Objects;
 
@@ -55,7 +46,7 @@ public class RedeemInviteActivity extends AppCompatActivity {
             Utils.redeemInvite(lockMAC, inviteID,this , success -> {
                 runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.smart_door_created_title)
-                        .setMessage(success ? R.string.smart_door_created_msg : R.string.smart_door_error_created_msg)
+                        .setMessage(success ? R.string.smart_lock_created_msg : R.string.error_creating_smart_lock_invalid_invite_msg)
                         .setPositiveButton(R.string.OK, (dialog, which) -> {})
                         .show());
             });

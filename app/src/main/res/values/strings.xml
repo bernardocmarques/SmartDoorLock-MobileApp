@@ -12,7 +12,7 @@
     <string name="invite_created_dialog_message">"Invite ID: "</string>
     <string name="CLOSE">Close</string>
     <string name="COPY_TO_CLIPBOARD">Copy to Clipboard</string>
-    <string name="redeem_invite">Redeem Invite</string>
+    <string name="redeem_invite_code">Redeem Invite Code</string>
     <string name="smart_locks">Smart Locks</string>
     <string name="sidebar_about">About Smart Locks</string>
     <string name="sidebar_profile">Profile</string>
@@ -45,10 +45,21 @@
     <string name="sign_up_later">Sign up later</string>
     <string name="sign_up">Sign up</string>
     <string name="smart_door_created_title">New smart lock</string>
-    <string name="smart_door_created_msg">New smart lock successfully created</string>
-    <string name="smart_door_error_created_msg">Error creating new smart door, try again.</string>
+    <string name="smart_lock_created_msg">New smart lock successfully created</string>
+    <string name="error_creating_smart_lock_invalid_invite_msg">Error creating new smart lock. Invalid invite, try again.</string>
+    <string name="error_creating_smart_lock_repeated_lock_msg">Error creating new smart lock. User already have this lock registered, try again.</string>
+    <string name="error_creating_smart_lock_registered_lock_msg">Error creating new smart lock. Lock already registered. Try adding lock with an invite code.</string>
     <string name="read_qr_code_to_add_lock">Read QR Code to add lock</string>
     <string name="scan_for_ble_devices">Scan for BLE devices</string>
     <string name="add_new_smart_lock_title">Add new Smart Lock</string>
+    <string name="invite_code">Invite Code</string>
+    <string name="preview">preview</string>
+    <string name="smart_lock_name">Smart Lock Name</string>
+    <string name="save">Save</string>
+    <string name="edit_smart_lock_title">Edit Smart Lock</string>
+    <string name="select_smart_lock_icon">Select Smart Lock icon:</string>
+    <string name="connect">Connect</string>
+    <string name="skip">Skip</string>
+    <string name="setup_wifi_title">Setup Smart Lock Wifi</string>
 
 </resources>

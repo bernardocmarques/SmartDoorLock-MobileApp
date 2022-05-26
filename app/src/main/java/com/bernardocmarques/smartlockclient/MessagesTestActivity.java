@@ -56,6 +56,13 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         redeemInviteBtn = findViewById(R.id.btn_redeem_invite);
         bleConnectedSwitch = findViewById(R.id.switch_connected);
 
+        findViewById(R.id.btn_edit_lock).setOnClickListener(v -> {
+            Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
+            lock.clearIcon();
+            intent.putExtra("lock", lock);
+            startActivity(intent);
+        });
+
         updateUIOnBLEDisconnected();
         bleConnectedSwitch.setText(R.string.BLE_CONNECTING);
 

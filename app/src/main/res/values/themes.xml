@@ -21,6 +21,9 @@
 
 
 
+
+
+
     <style name="BLESwitch" parent="Theme.MaterialComponents.DayNight">
         ...
         <item name="colorSecondary">@color/blue_bluetooth</item>

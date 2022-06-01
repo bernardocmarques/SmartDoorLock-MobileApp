@@ -204,8 +204,7 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
                                         if (lockCreated) {
                                             lock.setName("");
                                             Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
-                                            lock.clearIcon();
-                                            intent.putExtra("lock", lock);
+                                            intent.putExtra("lock", lock.getSerializable());
                                             startActivity(intent);
                                         }
                                     });

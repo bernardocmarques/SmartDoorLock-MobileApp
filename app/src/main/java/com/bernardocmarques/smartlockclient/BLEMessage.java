@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import java.security.SecureRandom;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -68,11 +69,14 @@ public class BLEMessage {
     }
 
     private void purgeNonceMap(Date now) {
-        for (Date nonceExpire: nonceMap.keySet()) {
-            if (nonceExpire.after(now)) {
-                nonceMap.remove(nonceExpire);
+        try {
+            for (Date nonceExpire: nonceMap.keySet()) {
+                if (nonceExpire.after(now)) {
+                    nonceMap.remove(nonceExpire);
+                }
             }
-        }
+        } catch (ConcurrentModificationException ignore) { }
+
     }
 }
 

@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -23,9 +22,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
 
 
     BLEManager bleManager;
-
     RSAUtil rsaUtil;
-
     Lock lock;
 
     /* UI */
@@ -33,7 +30,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
     Button openLockBtn;
     Button closeLockBtn;
     Button createNewInviteBtn;
-    Button redeemInviteBtn;
+    Button getLockStatusBtn;
     SwitchMaterial bleConnectedSwitch;
 
 
@@ -44,22 +41,19 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         Utils.forceLightModeOn();
 
         Bundle bundle = getIntent().getExtras();
-        String lockId = bundle.getString("lockId");
-        this.lock = GlobalValues.getInstance().getUserLockById(lockId);
+        lock = Lock.fromSerializable(bundle.getSerializable("lock"));
 
         bleManager = BLEManager.getInstance();
-
 
         openLockBtn = findViewById(R.id.btn_open_lock);
         closeLockBtn = findViewById(R.id.btn_close_lock);
         createNewInviteBtn = findViewById(R.id.btn_create_new_invite);
-        redeemInviteBtn = findViewById(R.id.btn_redeem_invite);
+        getLockStatusBtn = findViewById(R.id.btn_get_lock_status);
         bleConnectedSwitch = findViewById(R.id.switch_connected);
 
         findViewById(R.id.btn_edit_lock).setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
-            lock.clearIcon();
-            intent.putExtra("lock", lock);
+            intent.putExtra("lock", lock.getSerializable());
             startActivity(intent);
         });
 
@@ -78,7 +72,7 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         openLockBtn.setEnabled(false);
         closeLockBtn.setEnabled(false);
         createNewInviteBtn.setEnabled(false);
-        redeemInviteBtn.setEnabled(false);
+        getLockStatusBtn.setEnabled(false);
 
     }
 
@@ -89,11 +83,12 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         openLockBtn.setEnabled(true);
         closeLockBtn.setEnabled(true);
         createNewInviteBtn.setEnabled(true);
-        redeemInviteBtn.setEnabled(true);
+        getLockStatusBtn.setEnabled(true);
         bleManager.scanDevices();
 
     }
 
+    @Override
     public Activity getActivity() {
         return this;
     }
@@ -151,9 +146,8 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
             startActivity(intent);
         });
 
-        redeemInviteBtn.setOnClickListener(view -> {
-            Intent intent = new Intent(getApplicationContext(), RedeemInviteActivity.class);
-            startActivity(intent);
+        getLockStatusBtn.setOnClickListener(view -> {
+            getLockStateCommunication();
         });
 
         bleConnectedSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -215,6 +209,18 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
                 runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door Locked", Toast.LENGTH_LONG).show());
             } else { // command not  ACK
                 Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
+            }
+        });
+    }
+
+
+    private void getLockStateCommunication() {
+        bleManager.sendCommandWithAuthentication(this,"RDS", responseSplit -> {
+            if (responseSplit[0].equals("SDS")) {
+                Log.i(TAG, "Door State " + responseSplit[1]);
+                runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door State " + responseSplit[1], Toast.LENGTH_LONG).show());
+            } else { // command not  ACK
+                Log.e(TAG, "Error: Should have received SDS command. (After RDS)");
             }
         });
     }

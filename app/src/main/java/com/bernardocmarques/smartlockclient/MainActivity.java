@@ -195,6 +195,13 @@ public class MainActivity extends AppCompatActivity {
 
                 lockCardsFlexbox.addView(lockCard, params);
 
+                lockCard.setOnClickListener(view -> {
+                    Intent intent = new Intent(getApplicationContext(), SmartLockActivity.class);
+                    intent.putExtra("lock", lock.getSerializable());
+                    startActivity(intent);
+                });
+
+                ImageView imageView = lockCard.findViewById(R.id.lock_card_image_view);
 
                 new Timer().scheduleAtFixedRate(new TimerTask(){
                     @Override
@@ -202,12 +209,7 @@ public class MainActivity extends AppCompatActivity {
 
                         Bitmap bitmap = lock.getIcon();
                         if (bitmap != null) {
-                            ImageView imageView = lockCard.findViewById(R.id.lock_card_image_view);
-                            lockCard.setOnClickListener(view -> {
-                                Intent intent = new Intent(getApplicationContext(), MessagesTestActivity.class);
-                                intent.putExtra("lockId", lock.getId());
-                                startActivity(intent);
-                            });
+
                             runOnUiThread(() -> {
                                 imageView.setImageBitmap(bitmap);
                                 lockCard.setVisibility(View.VISIBLE);

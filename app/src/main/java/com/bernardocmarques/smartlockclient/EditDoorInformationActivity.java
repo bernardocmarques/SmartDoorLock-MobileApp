@@ -41,7 +41,7 @@ public class EditDoorInformationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_edit_door_information);
 
         Bundle bundle = getIntent().getExtras();
-        lock = (Lock) bundle.getSerializable("lock");
+        lock = Lock.fromSerializable(bundle.getSerializable("lock"));
 
         setActionBar();
         createUI();

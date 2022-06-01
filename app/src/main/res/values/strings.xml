@@ -61,5 +61,11 @@
     <string name="connect">Connect</string>
     <string name="skip">Skip</string>
     <string name="setup_wifi_title">Setup Smart Lock Wifi</string>
+    <string name="share">Share</string>
+    <string name="delete">Delete</string>
+    <string name="settings">Settings</string>
+    <string name="slide_to_unlock">Slide to Unlock</string>
+    <string name="connected_state">Connected State</string>
+    <string name="slide_to_lock">Slide to Lock</string>
 
 </resources>

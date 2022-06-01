@@ -8,9 +8,15 @@ import com.google.gson.JsonObject;
 
 import java.io.Serializable;
 
-public class Lock implements Serializable {
+public class Lock{
 
     static String TAG = "Cycling_Fizz@Lock";
+
+
+    public enum LockState {
+        LOCKED,
+        UNLOCKED
+    }
 
     private final String id;
     private final String macAddress;
@@ -19,6 +25,7 @@ public class Lock implements Serializable {
     private String iconID;
     private Bitmap icon = null;
 
+    private LockState lockState;
 
 
     public Lock(String id, String macAddress, String bleAddress, String name, String iconID) {
@@ -92,7 +99,7 @@ public class Lock implements Serializable {
         this.name = name;
     }
 
-    public void clearIcon() {
+    private void clearIcon() {
         this.icon = null;
     }
 
@@ -101,4 +108,69 @@ public class Lock implements Serializable {
         (new Utils.httpRequestImage(bitmap -> icon = bitmap)).execute(getIconURL());
     }
 
+
+
+    private LockState getLockState() {
+        return lockState;
+    }
+
+    public boolean isLocked() {
+        return getLockState() == LockState.LOCKED;
+    }
+
+    public void setLockState(LockState lockState) {
+        this.lockState = lockState;
+    }
+
+
+    public Serializable getSerializable() {
+        return new LockSerializable(this.id, this.macAddress, this.bleAddress, this.name, this.iconID);
+    }
+
+    public static Lock fromSerializable(Serializable serializable) {
+        if (serializable.getClass().equals(LockSerializable.class)) {
+            LockSerializable lockSerializable = (LockSerializable) serializable;
+            return new Lock(lockSerializable.getId(), lockSerializable.getMacAddress(), lockSerializable.getBleAddress(), lockSerializable.getName(), lockSerializable.getIconID());
+        } else {
+            return null;
+        }
+    }
+
+    private static class LockSerializable implements Serializable {
+
+        private final String id;
+        private final String macAddress;
+        private final String bleAddress;
+        private final String name;
+        private final String iconID;
+
+        public LockSerializable(String id, String macAddress, String bleAddress, String name, String iconID) {
+            this.id = id;
+            this.macAddress = macAddress;
+            this.bleAddress = bleAddress;
+            this.name = name;
+            this.iconID = iconID;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getMacAddress() {
+            return macAddress;
+        }
+
+        public String getBleAddress() {
+            return bleAddress;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+
+        public String getIconID() {
+            return iconID;
+        }
+    }
 }

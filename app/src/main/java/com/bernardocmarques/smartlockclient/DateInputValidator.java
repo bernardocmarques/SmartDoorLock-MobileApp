@@ -4,6 +4,7 @@ import static java.lang.Integer.parseInt;
 
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
+import android.icu.util.TimeZone;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -75,6 +76,8 @@ public class DateInputValidator implements TextWatcher {
             } else if (strDate.length() > 6){
                 SimpleDateFormat sdfrmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
                 sdfrmt.setLenient(false);
+                sdfrmt.setTimeZone(TimeZone.getTimeZone("GMT"));
+
                 try {
                     Date javaDate = sdfrmt.parse(strDate);
                 } catch (ParseException e) {

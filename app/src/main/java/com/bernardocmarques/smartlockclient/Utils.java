@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
 import android.icu.text.SimpleDateFormat;
+import android.icu.util.TimeZone;
 import android.os.AsyncTask;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
@@ -80,7 +81,7 @@ public class Utils {
     public static int THUMBNAIL_SIZE_SMALL = 128;
     public static int THUMBNAIL_SIZE_MEDIUM = 256;
 
-    public static String SERVER_URL = "http://192.168.1.7:5000";
+    public static String SERVER_URL = "https://server.smartlocks.ga";
 
 
     public enum UserType {
@@ -118,6 +119,7 @@ public class Utils {
             materialDatePicker.addOnPositiveButtonClickListener(selection -> {
                 SimpleDateFormat sf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
                 Date date = new Date(selection);
+                sf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
                 editText.setText(sf.format(date));
 
@@ -132,6 +134,8 @@ public class Utils {
         String dateStr = Objects.requireNonNull(textInputLayout.getEditText()).getText().toString();
 
         SimpleDateFormat sf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        sf.setTimeZone(TimeZone.getTimeZone("GMT"));
+
         return sf.parse(dateStr);
 
     }

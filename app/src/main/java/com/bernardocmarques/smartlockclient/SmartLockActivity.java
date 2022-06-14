@@ -88,6 +88,24 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
         },0,100);
 
         actionBar.setNavigationOnClickListener(view -> finish());
+
+
+        // Set share btn click listener
+        actionBar.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.share) {
+                Intent intent = new Intent(getApplicationContext(), CreateNewInviteActivity.class);
+                intent.putExtra("lockId", lock.getId());
+                startActivity(intent);
+            } else if (id == R.id.delete) {
+
+            } else if (id == R.id.settings) {
+
+            }
+            return false;
+        });
+
+
     }
 
     void findViews() {

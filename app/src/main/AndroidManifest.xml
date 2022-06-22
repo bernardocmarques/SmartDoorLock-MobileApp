@@ -33,6 +33,18 @@
         android:theme="@style/Theme.SmartLockClient"
         android:usesCleartextTraffic="true"
         tools:replace="android:icon,android:theme">
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.bernardocmarques.smartlockclient.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true"
+            tools:ignore="MissingClass">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name=".SmartLockActivity"
             android:exported="false" />

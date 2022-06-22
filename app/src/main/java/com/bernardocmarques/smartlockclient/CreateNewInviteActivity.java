@@ -11,17 +11,25 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -216,12 +224,29 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
                 runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.invite_create_title)
                         .setMessage(inviteCode)
-                        .setPositiveButton(R.string.COPY_TO_CLIPBOARD, (dialog, which) -> {
+                        .setPositiveButton(R.string.SHARE_INVITE, (dialog, which) -> {
 
-//                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-//                            ClipData clip = ClipData.newPlainText("Invite id", inviteCode);
-//                            clipboard.setPrimaryClip(clip);
-//                            Toast.makeText(getApplicationContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
+                            QRCodeWriter writer = new QRCodeWriter();
+                            Uri bitmapUri = null;
+                            try {
+                                BitMatrix bitMatrix = writer.encode( "https://smartlocks.ga/new-lock?inviteCode=" + inviteCode, BarcodeFormat.QR_CODE, 512, 512);
+                                int width = bitMatrix.getWidth();
+                                int height = bitMatrix.getHeight();
+                                Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+                                for (int x = 0; x < width; x++) {
+                                    for (int y = 0; y < height; y++) {
+                                        bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                                    }
+                                }
+
+                                String bitmapPath = MediaStore.Images.Media.insertImage(getContentResolver(), bmp,"title", null);
+                                bitmapUri = Uri.parse(bitmapPath);
+
+
+                            } catch (WriterException e) {
+                                e.printStackTrace();
+                            }
+
 
 
                             Intent shareIntent = new Intent();
@@ -229,11 +254,11 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
                             shareIntent.putExtra(Intent.EXTRA_TEXT, "You have been invited to use a new Smart Lock.\n\n\n" +
                                     "Use the following link to register the Smart Lock:\n" +
                                     "https://smartlocks.ga/new-lock?inviteCode=" + inviteCode + "\n\n" +
-                                    "You can also register the Smart Lock with the following QR code\n\n" +
-                                    "If none of the above methods work try pasting this code in the app:\n"+
+                                    "You can also register the Smart Lock with the QR code sent in this message.\n\n" +
+                                    "If none of the above methods work try pasting this code in the app:\n\n"+
                                     inviteCode);
-//                                shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
-                            shareIntent.setType("text/*");
+                            if (bitmapUri != null) shareIntent.putExtra(Intent.EXTRA_STREAM, bitmapUri);
+                            shareIntent.setType("image/*");
                             shareIntent.setAction(Intent.ACTION_SEND);
                             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             startActivity(Intent.createChooser(shareIntent, "Share Smart Lock's Key"));
@@ -247,6 +272,8 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
             }
         });
     }
+
+
 
     @Override
     public void updateUIOnBLEDisconnected() {

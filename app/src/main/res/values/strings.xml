@@ -69,5 +69,6 @@
     <string name="slide_to_lock">Slide to Lock</string>
     <string name="scan">Scan</string>
     <string name="stop">Stop</string>
+    <string name="SHARE_INVITE">Share Invite</string>
 
 </resources>

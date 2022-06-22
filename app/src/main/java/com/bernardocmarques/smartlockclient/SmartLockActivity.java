@@ -4,11 +4,17 @@ import static java.lang.Integer.parseInt;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -73,9 +79,9 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
         actionBarTitle.setText(lock.getName());
 
         ImageView actionBarIcon = actionBarInclude.findViewById(R.id.taller_top_bar_icon);
-        new Timer().scheduleAtFixedRate(new TimerTask(){
+        new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
-            public void run(){
+            public void run() {
                 Bitmap bitmap = lock.getIcon();
                 Log.i(TAG, "run: " + bitmap);
                 if (bitmap != null) {
@@ -85,7 +91,7 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
                     this.cancel();
                 }
             }
-        },0,100);
+        }, 0, 100);
 
         actionBar.setNavigationOnClickListener(view -> finish());
 
@@ -137,7 +143,10 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
         } else {
             setSlideToUnlockViewToUnlocked();
         }
+
+
     }
+
 
     private void setSlideToUnlockViewToLocked() {
         slideToUnlockView.resetSlider();

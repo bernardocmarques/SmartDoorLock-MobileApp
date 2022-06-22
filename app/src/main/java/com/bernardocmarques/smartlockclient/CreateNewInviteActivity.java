@@ -10,6 +10,8 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -216,10 +218,26 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
                         .setMessage(inviteCode)
                         .setPositiveButton(R.string.COPY_TO_CLIPBOARD, (dialog, which) -> {
 
-                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                            ClipData clip = ClipData.newPlainText("Invite id", inviteCode);
-                            clipboard.setPrimaryClip(clip);
-                            Toast.makeText(getApplicationContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
+//                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+//                            ClipData clip = ClipData.newPlainText("Invite id", inviteCode);
+//                            clipboard.setPrimaryClip(clip);
+//                            Toast.makeText(getApplicationContext(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
+
+
+                            Intent shareIntent = new Intent();
+                            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Someone wants to share a Smart Lock's Key with you!");
+                            shareIntent.putExtra(Intent.EXTRA_TEXT, "You have been invited to use a new Smart Lock.\n\n\n" +
+                                    "Use the following link to register the Smart Lock:\n" +
+                                    "https://smartlocks.ga/new-lock?inviteCode=" + inviteCode + "\n\n" +
+                                    "You can also register the Smart Lock with the following QR code\n\n" +
+                                    "If none of the above methods work try pasting this code in the app:\n"+
+                                    inviteCode);
+//                                shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+                            shareIntent.setType("text/*");
+                            shareIntent.setAction(Intent.ACTION_SEND);
+                            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            startActivity(Intent.createChooser(shareIntent, "Share Smart Lock's Key"));
+
 
                         })
                         .setNegativeButton(R.string.CLOSE, (dialog, which) -> {})

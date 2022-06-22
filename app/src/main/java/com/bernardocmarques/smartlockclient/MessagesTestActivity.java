@@ -84,8 +84,6 @@ public class MessagesTestActivity extends AppCompatActivity implements BLEManage
         closeLockBtn.setEnabled(true);
         createNewInviteBtn.setEnabled(true);
         getLockStatusBtn.setEnabled(true);
-        bleManager.scanDevices();
-
     }
 
     @Override

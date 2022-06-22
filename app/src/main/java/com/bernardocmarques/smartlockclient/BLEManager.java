@@ -5,6 +5,7 @@ import static com.bernardocmarques.smartlockclient.BluetoothLeService.EXTRA_DATA
 import static java.lang.Long.parseLong;
 
 import android.app.Activity;
+import android.bluetooth.le.ScanCallback;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -228,8 +229,15 @@ public class BLEManager {
         String getLockBLE();
     }
 
-    public void scanDevices() {
-        mBluetoothLeService.scanLeDevice();
+    public boolean isScanning() {
+        return mBluetoothLeService.isScanning();
     }
 
+    public void scanDevices(ScanCallback leScanCallback) {
+        mBluetoothLeService.scanLeDevice(leScanCallback);
+    }
+
+    public void stopScanningDevices(ScanCallback leScanCallback) {
+        mBluetoothLeService.stopScanning(leScanCallback);
+    }
 }

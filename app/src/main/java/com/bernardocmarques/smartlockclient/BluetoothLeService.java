@@ -28,7 +28,9 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
@@ -37,6 +39,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import androidx.annotation.RequiresApi;
 
+import android.os.ParcelUuid;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -386,6 +389,7 @@ public class BluetoothLeService extends Service {
      *         callback.
      */
     public boolean connect(final String address) {
+
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
             return false;
@@ -491,38 +495,61 @@ public class BluetoothLeService extends Service {
     }
 
 
-    private boolean scanning;
-    private Handler handler = new Handler();
+    private boolean mScanning;
+    private final Handler handler = new Handler();
 
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
 
-    public void scanLeDevice() {
+    public boolean isScanning() {
+        return mScanning;
+    }
+
+    public void scanLeDevice(ScanCallback leScanCallback) {
+        UUID BLP_SERVICE_UUID = UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb");
+        UUID[] serviceUUIDs = new UUID[]{BLP_SERVICE_UUID};
+
+        List<ScanFilter> filters = null;
+        filters = new ArrayList<>();
+        for (UUID serviceUUID : serviceUUIDs) {
+            ScanFilter filter = new ScanFilter.Builder()
+                    .setServiceUuid(new ParcelUuid(serviceUUID))
+                    .build();
+            filters.add(filter);
+        }
+
+        ScanSettings scanSettings = new ScanSettings.Builder()
+                .setPhy(ScanSettings.PHY_LE_ALL_SUPPORTED)
+                .setLegacy(false)
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
+                .setReportDelay(0L)
+                .build();
+
         Log.i(TAG, "scanLeDevice: Start scanning.");
-        if (!scanning) {
+        if (!mScanning) {
             // Stops scanning after a predefined scan period.
             handler.postDelayed(() -> {
-                scanning = false;
+                mScanning = false;
                 bluetoothLeScanner.stopScan(leScanCallback);
             }, SCAN_PERIOD);
 
-            scanning = true;
-            bluetoothLeScanner.startScan(leScanCallback);
+            mScanning = true;
+            bluetoothLeScanner.startScan(filters, scanSettings, leScanCallback);
         } else {
-            scanning = false;
+            mScanning = false;
             bluetoothLeScanner.stopScan(leScanCallback);
         }
     }
 
+    public void stopScanning(ScanCallback leScanCallback) {
 
-    // Device scan callback.
-    private final ScanCallback leScanCallback =
-        new ScanCallback() {
-            @Override
-            public void onScanResult(int callbackType, ScanResult result) {
-                super.onScanResult(callbackType, result);
+        if (mScanning) {
+            mScanning = false;
+            bluetoothLeScanner.stopScan(leScanCallback);
+        }
+    }
 
-                Log.i(TAG, "onScanResult: " + result.getDevice() + " - " + result.getDevice().getName());
-            }
-        };
 }

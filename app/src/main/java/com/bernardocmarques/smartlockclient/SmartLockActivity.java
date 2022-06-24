@@ -16,7 +16,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,9 +29,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textview.MaterialTextView;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.ncorti.slidetoact.SlideToActView;
 
 import java.util.Timer;
@@ -46,6 +54,8 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
     SlideToActView slideToUnlockView;
     TextView connectedStateTextView;
     ImageView connectedStateIcon;
+
+    boolean isConnected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,13 +110,29 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
         actionBar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.share) {
+                if (!isConnected) {
+                    Toast.makeText(getApplicationContext(), "Not yet connected to smart lock!", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
                 Intent intent = new Intent(getApplicationContext(), CreateNewInviteActivity.class);
                 intent.putExtra("lockId", lock.getId());
                 startActivity(intent);
             } else if (id == R.id.delete) {
-
+                runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.delete_smart_lock_dialog_title)
+                        .setMessage(R.string.delete_smart_lock_dialog_msg)
+                        .setPositiveButton(R.string.delete_smart_lock_dialog_delete_btn, (dialog, which) -> {
+                            Utils.deleteUserLock(getLockId(), deleted -> {
+                                finish();
+                            });
+                        })
+                        .setNegativeButton(R.string.delete_smart_lock_dialog_not_delete_btn, (dialog, which) -> {})
+                        .show());
             } else if (id == R.id.settings) {
-
+                lock.setName("");
+                Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
+                intent.putExtra("lock", lock.getSerializable());
+                startActivity(intent);
             }
             return false;
         });
@@ -130,11 +156,13 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
 
 
     public void updateUIOnBLEDisconnected() {
+        isConnected = false;
         connectedStateTextView.setText(R.string.BLE_DISCONNECTED);
         connectedStateIcon.setImageResource(R.drawable.ic_round_bluetooth_disabled_24);
     }
 
     public void updateUIOnBLEConnected() {
+        isConnected = true;
         connectedStateTextView.setText(R.string.BLE_CONNECTED);
         connectedStateIcon.setImageResource(R.drawable.ic_round_bluetooth_24);
 

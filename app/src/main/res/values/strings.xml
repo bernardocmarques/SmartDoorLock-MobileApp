@@ -70,5 +70,10 @@
     <string name="scan">Scan</string>
     <string name="stop">Stop</string>
     <string name="SHARE_INVITE">Share Invite</string>
+    <string name="delete_smart_lock_dialog_title">Are you sure you want to delete?</string>
+    <string name="delete_smart_lock_dialog_msg">You are about to delete this Smart Lock.\n This action is irreversible!\n\n Are you sure you want to proceed?\n</string>
+    <string name="delete_smart_lock_dialog_delete_btn">Yes, delete this smart lock</string>
+    <string name="delete_smart_lock_dialog_not_delete_btn">No, don\'t delete smart lock</string>
+    <string name="CREATE_NEW_INVITE">Create new invite</string>
 
 </resources>

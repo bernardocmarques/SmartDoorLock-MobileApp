@@ -82,6 +82,7 @@ public class Utils {
     public static int THUMBNAIL_SIZE_MEDIUM = 256;
 
     public static String SERVER_URL = "https://server.smartlocks.ga";
+//    public static String SERVER_URL = "http://192.168.1.7:5000";
 
 
     public enum UserType {
@@ -493,6 +494,32 @@ public class Utils {
                             response.get("msg").getAsString());
                 }
             }, data.toString())).execute(SERVER_URL + "/set-user-locks");
+        });
+    }
+
+    public static void deleteUserLock(String lockId, OnTaskCompleted<Boolean> callback) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            callback.onTaskCompleted(false);
+            return;
+        }
+
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+
+            JsonObject data = new JsonObject();
+            data.addProperty("id_token", tokenId);
+            data.addProperty("lock_id", lockId);
+
+            (new httpPostRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    callback.onTaskCompleted(true);
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                }
+            }, data.toString())).execute(SERVER_URL + "/delete-user-lock");
         });
     }
 

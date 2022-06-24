@@ -217,6 +217,31 @@ public class BLEManager {
         );
     }
 
+    public void waitForReadyMessage(BLEActivity bleActivity, OnResponseReceived callback) {
+
+        Activity activity = bleActivity.getActivity();
+
+        activity.registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        activity.unregisterReceiver(this);
+
+                        final String action = intent.getAction();
+                        if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                            String data = intent.getStringExtra(EXTRA_DATA);
+                            if (data.equals("LOK")) {  // Lock OK
+                                callback.onResponseReceived(new String[]{"LOK"});
+                            } else {
+                                callback.onResponseReceived(new String[]{"LNO"}); // Lock Not OK
+                            }
+                        }
+                    }
+                },
+                new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE)
+        );
+    }
+
     public interface BLEActivity {
 
         void updateUIOnBLEDisconnected();

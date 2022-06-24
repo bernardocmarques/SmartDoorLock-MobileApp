@@ -466,6 +466,10 @@ public class BluetoothLeService extends Service {
         mBluetoothGatt.readCharacteristic(characteristic);
     }
 
+    public void readCharacteristic() {
+        readCharacteristic(readCharacteristic);
+    }
+
     /**
      * Enables or disables notification on a give characteristic.
      *

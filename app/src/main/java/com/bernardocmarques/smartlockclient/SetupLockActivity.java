@@ -1,11 +1,16 @@
 package com.bernardocmarques.smartlockclient;
 
+import static com.bernardocmarques.smartlockclient.BluetoothLeService.EXTRA_DATA;
+import static java.lang.Long.parseLong;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -26,6 +31,9 @@ import com.espressif.iot.esptouch2.provision.EspProvisioningRequest;
 import com.espressif.iot.esptouch2.provision.EspProvisioningResult;
 import com.espressif.iot.esptouch2.provision.EspSyncListener;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
+
+import java.util.Arrays;
 
 public class SetupLockActivity extends AppCompatActivity implements BLEManager.BLEActivity {
 
@@ -34,6 +42,9 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
     EditText passwordEditText;
     ExtendedFloatingActionButton connectBtn;
     BLEManager bleManager;
+
+    CircularProgressIndicator loadingSpinner;
+    ConstraintLayout overlay;
 
     private static final String TAG = "SmartLock@SetupLockActivity";
     Context context = this;
@@ -60,6 +71,9 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
         Utils.forceLightModeOn();
 
         setActionBar();
+
+        overlay = findViewById(R.id.overlay);
+        loadingSpinner = overlay.findViewById(R.id.loading_spinner);
 
         Bundle bundle = getIntent().getExtras();
         lockId = bundle.getString("lockId");
@@ -118,6 +132,7 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
 
     private void afterWifiConfig() {
         if (mode == Mode.FIRST_CONFIG) {
+
             connectBLE();
         } else if (mode == Mode.CHANGE_WIFI) {
             finish();
@@ -137,7 +152,14 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
         unregisterReceiver(mGattUpdateReceiver);
     }
 
+    void setSpinner(boolean active) {
+        Log.e(TAG, "setSpinner: " + active);
+        overlay.setVisibility(active ? View.VISIBLE : View.GONE);
+        loadingSpinner.setVisibility(active ? View.VISIBLE : View.GONE);
+    }
+
     void connectBLE() {
+        setSpinner(true);
         bleManager.bindToBLEService(this);
     }
 
@@ -172,6 +194,8 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
                 if (inviteCode.length > 1) lockMAC = inviteCode[1];
 
                 if (inviteCode.length > 2) lockBLE = inviteCode[2];
+
+                setSpinner(false);
 
                 if (lockMAC == null || inviteID == null) {
                     runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
@@ -240,15 +264,24 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
+                waitForEspReadyMessage();
+            }
+        }
+    };
 
+    void waitForEspReadyMessage() {
+        bleManager.waitForReadyMessage(this, responseSplit -> {
+            if (responseSplit[0].equals("LOK")) {
                 Utils.getPublicKeyBase64FromDatabase(getLockId(), getActivity(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
                     updateUIOnBLEConnected();
                     requestFirstInvite();
                 });
+            } else {
+                this.waitForEspReadyMessage();
             }
-        }
-    };
+        });
+    }
 
 
     void syncWithLock() {
@@ -272,6 +305,7 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
 
     void sendWifiCredentials() {
         connectBtn.setEnabled(false);
+        setSpinner(true);
 
         provisioner.stopSync();
 
@@ -304,11 +338,16 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
 
                 provisioner.stopProvisioning();
 
-                runOnUiThread(() -> new MaterialAlertDialogBuilder(context)
-                    .setTitle(R.string.SETUP_DONE)
-                    .setMessage(R.string.SETUP_DONE_DIALOG_MESSAGE)
-                    .setPositiveButton(R.string.OK, (dialog, which) -> afterWifiConfig())
-                    .show());
+
+
+                runOnUiThread(() -> {
+                    setSpinner(false);
+                    new MaterialAlertDialogBuilder(context)
+                            .setTitle(R.string.SETUP_DONE)
+                            .setMessage(R.string.SETUP_DONE_DIALOG_MESSAGE)
+                            .setPositiveButton(R.string.OK, (dialog, which) -> afterWifiConfig())
+                            .show();
+                });
 
 
             }
@@ -319,6 +358,7 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
                 runOnUiThread(() -> Toast.makeText(context, "Stopped setup!", Toast.LENGTH_LONG).show());
                 provisioner.close();
                 connectBtn.setEnabled(true);
+                setSpinner(false);
             }
 
             @Override
@@ -326,6 +366,7 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
                 Log.e(TAG, "Error setting up!");
                 runOnUiThread(() -> Toast.makeText(context, "Error setting up!", Toast.LENGTH_LONG).show());
                 e.printStackTrace();
+                setSpinner(false);
             }
         };
 

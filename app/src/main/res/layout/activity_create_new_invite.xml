@@ -8,6 +8,12 @@
     android:layout_height="match_parent"
     tools:context=".MessagesTestActivity">
 
+    <include
+        android:id="@+id/action_bar_include"
+        layout="@layout/back_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textInputLayoutUT"
         style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
@@ -18,7 +24,7 @@
         android:hint="User Type"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/action_bar_include">
 
         <AutoCompleteTextView
             android:id="@+id/user_type_select"
@@ -121,17 +127,20 @@
     </com.google.android.material.textfield.TextInputLayout>
 
 
-    <Button
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/btn_create_new_invite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/Widget.MaterialComponents.Button"
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="20dp"
+        android:backgroundTint="@color/blue_500"
+        android:elevation="0dp"
+        android:letterSpacing=".06"
+        android:text="@string/create_new_invite"
+        android:textAlignment="center"
+        android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:text="@string/create_new_invite"
-        />
+        app:layout_constraintStart_toStartOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

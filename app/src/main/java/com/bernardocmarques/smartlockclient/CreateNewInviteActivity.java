@@ -24,7 +24,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -47,7 +49,7 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
     TextInputLayout validUntilTextInputLayout;
     WeekdaysPicker weekdaysPicker;
     TextInputLayout oneDayTextInputLayout;
-    Button createInviteBtn;
+    ExtendedFloatingActionButton createInviteBtn;
 
     HashMap<Integer, UserType> userTypeMap = new HashMap<>();
 
@@ -69,10 +71,21 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
         bleManager = BLEManager.getInstance();
 
+        setActionBar();
+        createUI();
+
         Utils.getPublicKeyBase64FromDatabase(getLockId(), this, keyRSA -> {
             this.rsaUtil = new RSAUtil(keyRSA);
-            createUI();
+            createUIListeners();
         });
+    }
+
+    void setActionBar() {
+        View actionBarInclude = findViewById(R.id.action_bar_include);
+        MaterialToolbar actionBar = actionBarInclude.findViewById(R.id.backBar);
+        actionBar.setTitle(R.string.CREATE_NEW_INVITE);
+
+        actionBar.setNavigationOnClickListener(view -> finish());
     }
 
 
@@ -93,14 +106,20 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
         createInviteBtn = findViewById(R.id.btn_create_new_invite);
 
+
+
+
+    }
+
+    void createUIListeners() {
+        createInviteBtn.setOnClickListener(view -> {
+            sendInviteRequest();
+        });
+
         createUserTypeSelect();
         createValidityDatePickers();
         createWeekDaySelect();
         createOneDayDatePickers();
-
-        createInviteBtn.setOnClickListener(view -> {
-            sendInviteRequest();
-        });
     }
 
     private void createUserTypeSelect() {

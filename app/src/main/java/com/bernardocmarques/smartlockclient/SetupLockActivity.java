@@ -35,7 +35,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 
 import java.util.Arrays;
 
-public class SetupLockActivity extends AppCompatActivity implements BLEManager.BLEActivity {
+public class SetupLockActivity extends AppCompatActivity implements Utils.CommActivity {
 
     TextView ssidTextView;
     TextView bssidTextView;
@@ -52,6 +52,7 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
     EspProvisioner provisioner;
 
     RSAUtil rsaUtil;
+    AESUtil aesUtil;
 
     String lockId;
     String lockBleAddress;
@@ -394,6 +395,11 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
     }
 
     @Override
+    public AESUtil getAESUtil() {
+        return aesUtil;
+    }
+
+    @Override
     public String getLockId() {
         return lockId;
     }
@@ -401,5 +407,10 @@ public class SetupLockActivity extends AppCompatActivity implements BLEManager.B
     @Override
     public String getLockBLE() {
         return lockBleAddress;
+    }
+
+    @Override
+    public void setAESUtil(AESUtil aes) {
+        aesUtil = aes;
     }
 }

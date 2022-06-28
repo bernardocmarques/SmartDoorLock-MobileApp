@@ -98,7 +98,6 @@
             android:name=".RedeemInviteActivity"
             android:exported="false" />
         <activity android:name=".CreateNewInviteActivity" />
-        <activity android:name=".MessagesTestActivity" />
         <activity android:name=".SetupLockActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>

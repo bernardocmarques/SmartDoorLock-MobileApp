@@ -37,7 +37,7 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class SetupNewLockActivity extends AppCompatActivity implements BLEManager.BLEActivity {
+public class SetupNewLockActivity extends AppCompatActivity implements Utils.CommActivity {
 
     private static final String TAG = "SmartLock@SetupNewLockActivity";
 
@@ -373,6 +373,11 @@ public class SetupNewLockActivity extends AppCompatActivity implements BLEManage
     }
 
     @Override
+    public AESUtil getAESUtil() {
+        return null;
+    }
+
+    @Override
     public String getLockId() {
         return null;
     }
@@ -381,4 +386,7 @@ public class SetupNewLockActivity extends AppCompatActivity implements BLEManage
     public String getLockBLE() {
         return null;
     }
+
+    @Override
+    public void setAESUtil(AESUtil aes) { }
 }

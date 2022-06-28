@@ -4,6 +4,7 @@ import static java.lang.Integer.parseInt;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
@@ -15,6 +16,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
@@ -42,11 +44,12 @@ import com.ncorti.slidetoact.SlideToActView;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class SmartLockActivity extends AppCompatActivity implements BLEManager.BLEActivity {
+public class SmartLockActivity extends AppCompatActivity implements Utils.CommActivity {
     private static final String TAG = "SmartLock@SmartLockActivity";
 
     BLEManager bleManager;
     RSAUtil rsaUtil;
+    AESUtil aesUtil;
     Lock lock;
 
 
@@ -56,6 +59,8 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
     ImageView connectedStateIcon;
 
     boolean isConnected = false;
+    boolean remoteConnect = false;
+    boolean offline = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,12 +115,13 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
         actionBar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.share) {
-                if (!isConnected) {
+                if ((!isConnected && !remoteConnect) || offline) {
                     Toast.makeText(getApplicationContext(), "Not yet connected to smart lock!", Toast.LENGTH_SHORT).show();
                     return false;
                 }
                 Intent intent = new Intent(getApplicationContext(), CreateNewInviteActivity.class);
                 intent.putExtra("lockId", lock.getId());
+                intent.putExtra("connectionMode", remoteConnect ? ConnectionMode.REMOTE : ConnectionMode.BLE);
                 startActivity(intent);
             } else if (id == R.id.delete) {
                 runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
@@ -165,6 +171,23 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
         isConnected = true;
         connectedStateTextView.setText(R.string.BLE_CONNECTED);
         connectedStateIcon.setImageResource(R.drawable.ic_round_bluetooth_24);
+
+        connectedStateIcon.setImageTintList(AppCompatResources.getColorStateList(getApplicationContext(), R.color.blue_bluetooth));
+
+        if (lock.isLocked()) {
+            setSlideToUnlockViewToLocked();
+        } else {
+            setSlideToUnlockViewToUnlocked();
+        }
+
+
+    }
+
+    public void updateUIOnRemoteConnected() {
+        connectedStateTextView.setText(R.string.REMOTE_CONNECTED);
+        connectedStateIcon.setImageResource(R.drawable.ic_round_satellite_alt_24);
+
+        connectedStateIcon.setImageTintList(AppCompatResources.getColorStateList(getApplicationContext(), R.color.black));
 
         if (lock.isLocked()) {
             setSlideToUnlockViewToLocked();
@@ -221,6 +244,15 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 updateUIOnBLEDisconnected();
+                remoteConnect = true;
+                Utils.getPublicKeyBase64FromDatabase(lock.getId(), getActivity(), rsaKey -> {
+                    Log.i(TAG, "onReceive: Entra aqui");
+                    rsaUtil = new RSAUtil(rsaKey);
+                    getLockStateCommunication(ignore -> updateUIOnRemoteConnected());
+                });
+
+
+
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
 //                generateAndSendCredentials();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
@@ -235,8 +267,17 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
     };
 
 
+    private void sendCommand(String cmd, Utils.OnResponseReceived callback) {
+        if (remoteConnect && !offline) {
+            Utils.sendRemoteCommandWithAuthentication(this,cmd, callback);
+        } else {
+            bleManager.sendCommandWithAuthentication(this,cmd, callback);
+        }
+    }
+
+
     private void openLockCommunication() {
-        bleManager.sendCommandWithAuthentication(this,"RUD", responseSplit -> {
+        sendCommand("RUD", responseSplit -> {
             if (responseSplit[0].equals("ACK")) {
 //                runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door Opened", Toast.LENGTH_LONG).show());
                 setSlideToUnlockViewToUnlocked();
@@ -247,7 +288,7 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
     }
 
     private void closeLockCommunication() {
-        bleManager.sendCommandWithAuthentication(this,"RLD", responseSplit -> {
+        sendCommand("RLD", responseSplit -> {
             if (responseSplit[0].equals("ACK")) {
 //                runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door Locked", Toast.LENGTH_LONG).show());
                 setSlideToUnlockViewToLocked();
@@ -257,8 +298,9 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
         });
     }
 
-    private void getLockStateCommunication(BLEManager.OnResponseReceived callback) {
-        bleManager.sendCommandWithAuthentication(this,"RDS", responseSplit -> {
+    private void getLockStateCommunication(Utils.OnResponseReceived callback) {
+
+        sendCommand("RDS", responseSplit -> {
             if (responseSplit[0].equals("SDS")) {
                 lock.setLockState(Lock.LockState.values()[parseInt(responseSplit[1])]);
                 runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door State " + responseSplit[1], Toast.LENGTH_LONG).show());
@@ -281,6 +323,11 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
     }
 
     @Override
+    public AESUtil getAESUtil() {
+        return aesUtil;
+    }
+
+    @Override
     public String getLockId() {
         return lock.getId();
     }
@@ -288,6 +335,11 @@ public class SmartLockActivity extends AppCompatActivity implements BLEManager.B
     @Override
     public String getLockBLE() {
         return lock.getBleAddress();
+    }
+
+    @Override
+    public void setAESUtil(AESUtil aes) {
+        this.aesUtil = aes;
     }
 
 

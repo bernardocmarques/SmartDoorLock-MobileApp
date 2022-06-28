@@ -154,10 +154,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        findViewById(R.id.btn_test_messages).setOnClickListener(v -> {
-            Intent intent = new Intent(getApplicationContext(), MessagesTestActivity.class);
-            startActivity(intent);
-        });
 
         findViewById(R.id.btn_add_new_lock).setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), SetupNewLockActivity.class);

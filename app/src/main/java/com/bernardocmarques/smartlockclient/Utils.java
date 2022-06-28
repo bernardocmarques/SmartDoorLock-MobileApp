@@ -1,5 +1,8 @@
 package com.bernardocmarques.smartlockclient;
 
+import static java.lang.Long.parseLong;
+
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,6 +17,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.Patterns;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -155,6 +159,27 @@ public class Utils {
             if (!b) return false;
         }
         return true;
+    }
+
+    /*** -------------------------------------------- ***/
+    /*** ----------------- CYPHERS ----------------- ***/ // fixme change name
+    /*** -------------------------------------------- ***/
+
+
+    private static final int KEY_SIZE = 256;
+
+
+    public static String generateSessionCredentials(CommActivity commActivity) {
+        commActivity.setAESUtil(new AESUtil(KEY_SIZE));
+        String key = commActivity.getAESUtil().generateNewSessionKey();
+
+        return commActivity.getRSAUtil().encrypt("SSC " + key);
+    }
+
+    public static String generateAuthCredentials(CommActivity commActivity, String seed) {
+        String username = GlobalValues.getInstance().getCurrentUsername();
+        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, commActivity.getLockId() + username);
+        return "SAC " + username + " " + authCode;
     }
 
     /*** -------------------------------------------- ***/
@@ -548,6 +573,121 @@ public class Utils {
                         response.get("msg").getAsString());
             }
         })).execute(SERVER_URL + "/get-all-icons");
+    }
+
+    /*** -------------------------------------------- ***/
+    /*** --------- Remote Connection Helper --------- ***/
+    /*** -------------------------------------------- ***/
+
+    public interface OnResponseReceived {
+        void onResponseReceived(String[] responseSplit);
+    }
+
+
+    public interface CommActivity {
+
+        void updateUIOnBLEDisconnected();
+        void updateUIOnBLEConnected();
+
+        Activity getActivity();
+        RSAUtil getRSAUtil();
+        AESUtil getAESUtil();
+
+        String getLockId();
+        String getLockBLE();
+
+        void setAESUtil(AESUtil aes);
+    }
+
+
+    public static void sendRemoteCommandWithAuthentication(CommActivity commActivity, String cmd, OnResponseReceived callback) {
+
+        String sessionCredentialsRequest = generateSessionCredentials(commActivity);
+
+        remoteConnection(commActivity, sessionCredentialsRequest, false, false,
+                responseSplitSSC -> {
+                    if (responseSplitSSC[0].equals("RAC")) {
+                        remoteConnection(commActivity, generateAuthCredentials(commActivity, responseSplitSSC[1]), true, false,
+                                responseSplitSAC -> {
+                                    if (responseSplitSAC[0].equals("ACK")) {
+
+                                        remoteConnection(commActivity, cmd, true, true, callback);
+
+                                    } else { // command not ACK
+                                        Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
+                                    }
+                                });
+                    }
+                });
+    }
+
+    public static void remoteConnection(CommActivity commActivity, String cmd, boolean encrypt, boolean close, OnResponseReceived callback) {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+
+            String msgEnc;
+            if (encrypt)
+                msgEnc = commActivity.getAESUtil().encrypt(new BLEMessage(cmd).toString());
+            else
+                msgEnc = cmd;
+
+
+            String tokenId = result.getToken();
+
+            JsonObject data = new JsonObject();
+            data.addProperty("id_token", tokenId);
+            data.addProperty("lock_id", commActivity.getLockId());
+            data.addProperty("msg", msgEnc);
+            data.addProperty("close", close);
+
+            (new Utils.httpPostRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+
+                    Activity activity = commActivity.getActivity();
+
+                    String responseEnc = response.get("response").getAsString();
+
+                    String[] msgEncSplit = responseEnc.split(" ");
+
+                    if (msgEncSplit.length < 2) {
+                        Log.e(TAG, "Less then 2");
+                        return;
+                    }
+                    String msg = commActivity.getAESUtil().decrypt(msgEncSplit[0], msgEncSplit[1]);
+                    if (msg == null) {
+                        Log.e(TAG, "Error decrypting message! Operation Canceled.");
+                        activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
+                        return;
+                    }
+
+                    Log.e(TAG, "Received: "  + msg);
+
+
+                    String[] msgSplit = msg.split(" ");
+                    int sizeCmdSplit = msgSplit.length;
+
+                    BLEMessage bleMessage = new BLEMessage(String.join(" ", Arrays.copyOfRange(msgSplit, 0, sizeCmdSplit-3)),  parseLong(msgSplit[sizeCmdSplit-3]), parseLong(msgSplit[sizeCmdSplit-2]), parseLong(msgSplit[sizeCmdSplit-1]));
+
+                    if (bleMessage.isValid()) {
+                        String[] cmdSplit = bleMessage.message.split(" ");
+                        callback.onResponseReceived(cmdSplit);
+
+                    } else {
+                        Log.e(TAG, "Message not valid! Operation Canceled.");
+                        activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
+                        callback.onResponseReceived(new String[]{"NAK"});
+                    }
+
+                } else {
+                    Log.e(TAG, "Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                    callback.onResponseReceived(new String[]{"NAK"});
+                }
+            }, data.toString())).execute(SERVER_URL + "/remote-connection");
+
+        });
+
     }
 
 

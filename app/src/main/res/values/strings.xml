@@ -5,7 +5,9 @@
     <string name="OK">OK</string>
     <string name="BLE_DISCONNECTED">Disconnected</string>
     <string name="BLE_CONNECTED">Connected</string>
-    <string name="BLE_CONNECTING">Connecting...</string>
+    <string name="BLE_CONNECTING">Connecting…</string>
+    <string name="REMOTE_CONNECTED">Remote Connected</string>
+
     <string name="INVALID_DATE_ERROR">Invalid Date</string>
     <string name="create_new_invite">Create new invite</string>
     <string name="invite_create_title">Invite Created</string>

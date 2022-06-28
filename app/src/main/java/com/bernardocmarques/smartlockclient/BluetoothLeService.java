@@ -418,6 +418,15 @@ public class BluetoothLeService extends Service {
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;
+
+        // fixme Create 5 seconds timeout to connect with BLE
+        new Handler().postDelayed(() -> {
+            if (!isConnected()) {
+                disconnect();
+                broadcastUpdate(ACTION_GATT_DISCONNECTED);
+            }
+        }, 5000);
+
         return true;
     }
 

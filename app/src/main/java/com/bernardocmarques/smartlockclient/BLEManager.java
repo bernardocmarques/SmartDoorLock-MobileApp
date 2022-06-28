@@ -24,14 +24,6 @@ public class BLEManager {
 
     private static BLEManager INSTANCE = null;
 
-
-    private static final int KEY_SIZE = 256;
-
-
-    private AESUtil aes;
-
-
-
     public BluetoothLeService mBluetoothLeService;
     public String mDeviceAddress;
 
@@ -48,14 +40,14 @@ public class BLEManager {
     }
 
 
-    void bindToBLEService(BLEActivity bleActivity) {
-        mDeviceAddress = bleActivity.getLockBLE();
-        Intent gattServiceIntent = new Intent(bleActivity.getActivity(), BluetoothLeService.class);
-        bleActivity.getActivity().bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+    void bindToBLEService(Utils.CommActivity commActivity) {
+        mDeviceAddress = commActivity.getLockBLE();
+        Intent gattServiceIntent = new Intent(commActivity.getActivity(), BluetoothLeService.class);
+        commActivity.getActivity().bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
-    public void onResume(BLEActivity bleActivity, BroadcastReceiver mGattUpdateReceiver) {
-        bleActivity.getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+    public void onResume(Utils.CommActivity commActivity, BroadcastReceiver mGattUpdateReceiver) {
+        commActivity.getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
         if (mBluetoothLeService != null && !mBluetoothLeService.isConnected()) {
             final boolean result = mBluetoothLeService.connect(mDeviceAddress);
             Log.d(TAG, "Connect request result=" + result);
@@ -91,30 +83,13 @@ public class BLEManager {
         }
     };
 
-    public interface OnResponseReceived {
-        void onResponseReceived(String[] responseSplit);
-    }
 
-
-    public String generateSessionCredentials(BLEActivity bleActivity) {
-        this.aes = new AESUtil(KEY_SIZE);
-        String key = aes.generateNewSessionKey();
-
-        return bleActivity.getRSAUtil().encrypt("SSC " + key);
-    }
-
-    public String generateAuthCredentials(BLEActivity bleActivity, String seed) {
-        String username = GlobalValues.getInstance().getCurrentUsername();
-        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, bleActivity.getLockId() + username);
-        return "SAC " + username + " " + authCode;
-    }
-
-    public void sendRequestFirstInvite(BLEActivity bleActivity, BLEManager.OnResponseReceived callback) {
-        sendCommandAndReceiveResponse(bleActivity, generateSessionCredentials(bleActivity), false,
+    public void sendRequestFirstInvite(Utils.CommActivity commActivity, Utils.OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(commActivity, Utils.generateSessionCredentials(commActivity), false,
                 responseSplitSSC -> {
                     if (responseSplitSSC[0].equals("ACK")) {
 
-                        sendCommandAndReceiveResponse(bleActivity, "RFI " + GlobalValues.getInstance().getCurrentUsername(), callback);
+                        sendCommandAndReceiveResponse(commActivity, "RFI " + GlobalValues.getInstance().getCurrentUsername(), callback);
 
                     } else { // command not ACK
                         Log.e(TAG, "Error: Should have received ACK command");
@@ -126,16 +101,16 @@ public class BLEManager {
     }
 
 
-    public void sendCommandWithAuthentication(BLEActivity bleActivity, String cmd, BLEManager.OnResponseReceived callback) {
-        sendCommandAndReceiveResponse(bleActivity, generateSessionCredentials(bleActivity), false,
+    public void sendCommandWithAuthentication(Utils.CommActivity commActivity, String cmd, Utils.OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(commActivity, Utils.generateSessionCredentials(commActivity), false,
                 responseSplitSSC -> {
                     if (responseSplitSSC[0].equals("RAC")) {
 
-                        sendCommandAndReceiveResponse(bleActivity, generateAuthCredentials(bleActivity, responseSplitSSC[1]),
+                        sendCommandAndReceiveResponse(commActivity, Utils.generateAuthCredentials(commActivity, responseSplitSSC[1]),
                                 responseSplitSAC -> {
                                     if (responseSplitSAC[0].equals("ACK")) {
 
-                                        sendCommandAndReceiveResponse(bleActivity, cmd, callback);
+                                        sendCommandAndReceiveResponse(commActivity, cmd, callback);
 
                                     } else { // command not ACK
                                         Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
@@ -148,16 +123,16 @@ public class BLEManager {
                 });
     }
 
-    void sendCommandAndReceiveResponse(BLEActivity bleActivity, String cmd, BLEManager.OnResponseReceived callback) {
-        sendCommandAndReceiveResponse(bleActivity, cmd,true, callback);
+    void sendCommandAndReceiveResponse(Utils.CommActivity commActivity, String cmd, Utils.OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(commActivity, cmd,true, callback);
     }
 
-    public void sendCommandAndReceiveResponse(BLEActivity bleActivity, String cmd, boolean encrypt, OnResponseReceived callback) {
+    public void sendCommandAndReceiveResponse(Utils.CommActivity commActivity, String cmd, boolean encrypt, Utils.OnResponseReceived callback) {
         String msgEnc;
-        Activity activity = bleActivity.getActivity();
+        Activity activity = commActivity.getActivity();
 
         if (encrypt)
-            msgEnc = aes.encrypt(new BLEMessage(cmd).toString());
+            msgEnc = commActivity.getAESUtil().encrypt(new BLEMessage(cmd).toString());
         else
             msgEnc = cmd;
 
@@ -165,7 +140,7 @@ public class BLEManager {
 
         if (!success) {
             if (!mBluetoothLeService.isConnected()) {
-                bleActivity.updateUIOnBLEDisconnected();
+                commActivity.updateUIOnBLEDisconnected();
             }
             return;
         }
@@ -187,7 +162,7 @@ public class BLEManager {
                                 Log.e(TAG, "Less then 2");
                                 return;
                             }
-                            String msg = aes.decrypt(msgEncSplit[0], msgEncSplit[1]);
+                            String msg = commActivity.getAESUtil().decrypt(msgEncSplit[0], msgEncSplit[1]);
                             if (msg == null) {
                                 Log.e(TAG, "Error decrypting message! Operation Canceled.");
                                 activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
@@ -217,9 +192,9 @@ public class BLEManager {
         );
     }
 
-    public void waitForReadyMessage(BLEActivity bleActivity, OnResponseReceived callback) {
+    public void waitForReadyMessage(Utils.CommActivity commActivity, Utils.OnResponseReceived callback) {
 
-        Activity activity = bleActivity.getActivity();
+        Activity activity = commActivity.getActivity();
 
         activity.registerReceiver(
                 new BroadcastReceiver() {
@@ -241,18 +216,7 @@ public class BLEManager {
                 new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE)
         );
     }
-
-    public interface BLEActivity {
-
-        void updateUIOnBLEDisconnected();
-        void updateUIOnBLEConnected();
-
-        Activity getActivity();
-        RSAUtil getRSAUtil();
-
-        String getLockId();
-        String getLockBLE();
-    }
+    
 
     public boolean isScanning() {
         return mBluetoothLeService.isScanning();

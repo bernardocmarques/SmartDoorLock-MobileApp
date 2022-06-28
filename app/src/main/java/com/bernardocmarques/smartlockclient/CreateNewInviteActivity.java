@@ -37,11 +37,17 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class CreateNewInviteActivity extends AppCompatActivity implements BLEManager.BLEActivity {
+enum ConnectionMode {
+    REMOTE,
+    BLE
+}
+
+public class CreateNewInviteActivity extends AppCompatActivity implements Utils.CommActivity {
     private static final String TAG = "SmartLock@CreateNewInvite";
 
     BLEManager bleManager;
     RSAUtil rsaUtil;
+    AESUtil aesUtil;
 
     /* UI */
     AutoCompleteTextView userTypeSelect;
@@ -55,7 +61,7 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
     UserType selectedUserType;
 
-
+    ConnectionMode connectionMode;
     Lock lock;
 
     @Override
@@ -66,6 +72,8 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
 
         Bundle bundle = getIntent().getExtras();
         String lockId = bundle.getString("lockId");
+        connectionMode = (ConnectionMode) bundle.getSerializable("connectionMode");
+
         this.lock = GlobalValues.getInstance().getUserLockById(lockId);
 
 
@@ -234,8 +242,16 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
         return "" ;
     }
 
+
+    private void sendCommand(String cmd, Utils.OnResponseReceived callback) {
+        if (connectionMode == ConnectionMode.REMOTE) {
+            Utils.sendRemoteCommandWithAuthentication(this, cmd, callback);
+        } else {
+            bleManager.sendCommandWithAuthentication(this, cmd, callback);
+        }
+    }
     private void sendInviteRequest() {
-        bleManager.sendCommandWithAuthentication(this, getInviteRequestCommand(), responseSplit -> {
+        sendCommand(getInviteRequestCommand(), responseSplit -> {
             if (responseSplit[0].equals("SNI")) {
                 String inviteCode = responseSplit[1];
                 Log.i(TAG, "Invite: " + inviteCode);
@@ -315,6 +331,11 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
     }
 
     @Override
+    public AESUtil getAESUtil() {
+        return aesUtil;
+    }
+
+    @Override
     public String getLockId() {
         return lock.getId();
     }
@@ -322,5 +343,10 @@ public class CreateNewInviteActivity extends AppCompatActivity implements BLEMan
     @Override
     public String getLockBLE() {
         return lock.getBleAddress();
+    }
+
+    @Override
+    public void setAESUtil(AESUtil aes) {
+        this.aesUtil = aes;
     }
 }

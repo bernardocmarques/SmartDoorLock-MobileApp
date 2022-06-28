@@ -305,6 +305,7 @@ public class BluetoothLeService extends Service {
 
         if (characteristic == readCharacteristic) {
             final byte[] data = characteristic.getValue();
+            Log.e(TAG, "broadcastUpdate: " + Arrays.toString(data));
             if (data[data.length-1] != 4) {
                 pendingMsg += new String(data);
                 Log.e(TAG, "appending message");

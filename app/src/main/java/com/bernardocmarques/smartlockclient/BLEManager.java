@@ -128,6 +128,10 @@ public class BLEManager {
     }
 
     public void sendCommandAndReceiveResponse(Utils.CommActivity commActivity, String cmd, boolean encrypt, Utils.OnResponseReceived callback) {
+        sendCommandAndReceiveResponse(commActivity, cmd,encrypt, true, callback);
+    }
+
+    public void sendCommandAndReceiveResponse(Utils.CommActivity commActivity, String cmd, boolean encrypt, boolean decrypt, Utils.OnResponseReceived callback) {
         String msgEnc;
         Activity activity = commActivity.getActivity();
 
@@ -155,35 +159,39 @@ public class BLEManager {
                         if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                             String msgEnc = intent.getStringExtra(EXTRA_DATA);
 
-                            String[] msgEncSplit = msgEnc.split(" ");
+                            if (decrypt) {
+                                String[] msgEncSplit = msgEnc.split(" ");
 
-                            Log.w(TAG, "onReceive: " + msgEnc);
-                            if (msgEncSplit.length < 2) {
-                                Log.e(TAG, "Less then 2");
-                                return;
-                            }
-                            String msg = commActivity.getAESUtil().decrypt(msgEncSplit[0], msgEncSplit[1]);
-                            if (msg == null) {
-                                Log.e(TAG, "Error decrypting message! Operation Canceled.");
-                                activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
-                                return;
-                            }
+                                Log.w(TAG, "onReceive: " + msgEnc);
+                                if (msgEncSplit.length < 2) {
+                                    Log.e(TAG, "Less then 2");
+                                    return;
+                                }
+                                String msg = commActivity.getAESUtil().decrypt(msgEncSplit[0], msgEncSplit[1]);
+                                if (msg == null) {
+                                    Log.e(TAG, "Error decrypting message! Operation Canceled.");
+                                    activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
+                                    return;
+                                }
 
-                            String[] msgSplit = msg.split(" ");
-                            int sizeCmdSplit = msgSplit.length;
+                                String[] msgSplit = msg.split(" ");
+                                int sizeCmdSplit = msgSplit.length;
 
-                            BLEMessage bleMessage = new BLEMessage(String.join(" ", Arrays.copyOfRange(msgSplit, 0, sizeCmdSplit-3)),  parseLong(msgSplit[sizeCmdSplit-3]), parseLong(msgSplit[sizeCmdSplit-2]), parseLong(msgSplit[sizeCmdSplit-1]));
+                                BLEMessage bleMessage = new BLEMessage(String.join(" ", Arrays.copyOfRange(msgSplit, 0, sizeCmdSplit-3)),  parseLong(msgSplit[sizeCmdSplit-3]), parseLong(msgSplit[sizeCmdSplit-2]), parseLong(msgSplit[sizeCmdSplit-1]));
 //                            BLEMessage bleMessage = new BLEMessage(cmd);
-                            Log.e(TAG, "onReceive: " + bleMessage.message);
-                            if (bleMessage.isValid()) {
-                                String[] cmdSplit = bleMessage.message.split(" ");
-                                callback.onResponseReceived(cmdSplit);
+                                Log.e(TAG, "onReceive: " + bleMessage.message);
+                                if (bleMessage.isValid()) {
+                                    String[] cmdSplit = bleMessage.message.split(" ");
+                                    callback.onResponseReceived(cmdSplit);
 
+                                } else {
+                                    Log.e(TAG, "Message not valid! Operation Canceled.");
+                                    activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
+                                }
                             } else {
-                                Log.e(TAG, "Message not valid! Operation Canceled.");
-                                activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
+                                String[] cmdSplit = msgEnc.split(" ");
+                                callback.onResponseReceived(cmdSplit);
                             }
-
 
                         }
                     }
@@ -194,27 +202,43 @@ public class BLEManager {
 
     public void waitForReadyMessage(Utils.CommActivity commActivity, Utils.OnResponseReceived callback) {
 
-        Activity activity = commActivity.getActivity();
 
-        activity.registerReceiver(
-                new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        activity.unregisterReceiver(this);
 
-                        final String action = intent.getAction();
-                        if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                            String data = intent.getStringExtra(EXTRA_DATA);
-                            if (data.equals("LOK")) {  // Lock OK
-                                callback.onResponseReceived(new String[]{"LOK"});
-                            } else {
-                                callback.onResponseReceived(new String[]{"LNO"}); // Lock Not OK
-                            }
-                        }
+
+
+
+        sendCommandAndReceiveResponse(commActivity,"PNG", false, false,
+                responseSplit -> {
+                    Log.e(TAG, "waitForReadyMessage: " + responseSplit[0]);
+                    if (responseSplit[0].equals("LOK")) {
+                        Log.e(TAG, "waitForReadyMessage: nao esperar");
+                        callback.onResponseReceived(responseSplit);
+                    } else {
+                        Log.e(TAG, "waitForReadyMessage: esperar");
+                        Activity activity = commActivity.getActivity();
+
+                        activity.registerReceiver(
+                                new BroadcastReceiver() {
+                                    @Override
+                                    public void onReceive(Context context, Intent intent) {
+                                        activity.unregisterReceiver(this);
+
+                                        final String action = intent.getAction();
+                                        if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                                            String data = intent.getStringExtra(EXTRA_DATA);
+                                            Log.e(TAG, "onReceive2: " + data);
+                                            if (data.equals("LOK")) {  // Lock OK
+                                                callback.onResponseReceived(new String[]{"LOK"});
+                                            } else {
+                                                callback.onResponseReceived(new String[]{"LNO"}); // Lock Not OK
+                                            }
+                                        }
+                                    }
+                                },
+                                new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE)
+                        );
                     }
-                },
-                new IntentFilter(BluetoothLeService.ACTION_DATA_AVAILABLE)
-        );
+                });
     }
     
 

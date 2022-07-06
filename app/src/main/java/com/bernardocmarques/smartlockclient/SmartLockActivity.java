@@ -22,6 +22,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,12 +36,14 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textview.MaterialTextView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.ncorti.slidetoact.SlideToActView;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -85,6 +88,23 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
         setActionBar();
     }
 
+    // fixme Consider changing to Activity Result API v
+    private static final int LOCK_EDIT_REQUEST_CODE = 1;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == LOCK_EDIT_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                lock = Lock.fromSerializable(data.getExtras().getSerializable("lock"));
+                setActionBar();
+            }
+        }
+    }
+
+    // fixme Consider changing to Activity Result API ^
+
     void setActionBar() {
         View actionBarInclude = findViewById(R.id.action_bar_include);
         MaterialToolbar actionBar = actionBarInclude.findViewById(R.id.taller_top_bar);
@@ -119,6 +139,7 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
                     Toast.makeText(getApplicationContext(), "Not yet connected to smart lock!", Toast.LENGTH_SHORT).show();
                     return false;
                 }
+
                 Intent intent = new Intent(getApplicationContext(), CreateNewInviteActivity.class);
                 intent.putExtra("lockId", lock.getId());
                 intent.putExtra("connectionMode", remoteConnect ? ConnectionMode.REMOTE : ConnectionMode.BLE);
@@ -135,10 +156,10 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
                         .setNegativeButton(R.string.delete_smart_lock_dialog_not_delete_btn, (dialog, which) -> {})
                         .show());
             } else if (id == R.id.settings) {
-                lock.setName("");
                 Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
                 intent.putExtra("lock", lock.getSerializable());
-                startActivity(intent);
+//                startActivity(intent);
+                startActivityForResult(intent, LOCK_EDIT_REQUEST_CODE); // fixme Consider changing to Activity Result API
             }
             return false;
         });
@@ -248,7 +269,13 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
                 Utils.getPublicKeyBase64FromDatabase(lock.getId(), getActivity(), rsaKey -> {
                     Log.i(TAG, "onReceive: Entra aqui");
                     rsaUtil = new RSAUtil(rsaKey);
-                    getLockStateCommunication(ignore -> updateUIOnRemoteConnected());
+                    getLockStateCommunication(ignore -> Utils.checkUserSavedInvite(gotInvite -> {
+                        if (!gotInvite) {
+                            requestUserInvite(ignore2 -> updateUIOnRemoteConnected());
+                        } else {
+                            updateUIOnRemoteConnected();
+                        }
+                    }));
                 });
 
 
@@ -260,7 +287,13 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
                 Utils.getPublicKeyBase64FromDatabase(lock.getId(), getActivity(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
-                    getLockStateCommunication(ignore -> updateUIOnBLEConnected());
+                    getLockStateCommunication(ignore -> Utils.checkUserSavedInvite(gotInvite -> {
+                        if (!gotInvite) {
+                            requestUserInvite(ignore2 -> updateUIOnBLEConnected());
+                        } else {
+                            updateUIOnBLEConnected();
+                        }
+                    }));
                 });
             }
         }
@@ -305,6 +338,45 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
                 lock.setLockState(Lock.LockState.values()[parseInt(responseSplit[1])]);
                 runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door State " + responseSplit[1], Toast.LENGTH_LONG).show());
                 callback.onResponseReceived(null);
+            } else { // command not  ACK
+                Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
+            }
+        });
+    }
+
+    private void requestUserInvite(Utils.OnTaskCompleted<Boolean> callback) {
+        sendCommand("RUI " + Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail(), responseSplit -> {
+            if (responseSplit[0].equals("SUI")) {
+                String inviteCodeB64 = responseSplit[1];
+                Log.i(TAG, "Invite: " + inviteCodeB64);
+
+
+                String[] inviteCode = {};
+
+                String inviteID = null;
+                String lockMAC = null;
+                String lockBLE = null;
+
+                try {
+                    inviteCode = new String(Base64.decode(inviteCodeB64, Base64.NO_WRAP)).split(" ");
+                } catch (IllegalArgumentException e) {
+                    runOnUiThread(() -> new MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.smart_door_created_title)
+                            .setMessage(R.string.error_creating_smart_lock_invalid_invite_msg)
+                            .setPositiveButton(R.string.OK, (dialog, which) -> {})
+                            .show());
+                    return;
+                }
+
+                if (inviteCode.length > 0)  inviteID = inviteCode[0];
+
+                if (inviteCode.length > 1) lockMAC = inviteCode[1];
+
+                if (inviteCode.length > 2) lockBLE = inviteCode[2];
+
+
+                Utils.saveUserInvite(inviteID, callback);
+
             } else { // command not  ACK
                 Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
             }

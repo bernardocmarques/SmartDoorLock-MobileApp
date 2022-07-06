@@ -30,6 +30,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
+import com.journeyapps.barcodescanner.Util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
         sidebar = new Sidebar(this);
 
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+
             Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));
         }
 

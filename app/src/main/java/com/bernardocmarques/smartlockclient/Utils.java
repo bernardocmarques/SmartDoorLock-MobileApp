@@ -378,7 +378,7 @@ public class Utils {
                 if (response.get("success").getAsBoolean()) {
                     callback.onTaskCompleted(true);
                 } else {
-                    Log.e(TAG, "Error code " +
+                    Log.e(TAG, "Request \"/finish-user-creation\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());
@@ -396,7 +396,7 @@ public class Utils {
                     String username = response.get("username").getAsString();
                     callback.onTaskCompleted(username);
                 } else {
-                    Log.e(TAG, "Error code " +
+                    Log.e(TAG, "Request \"/get-username\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());
@@ -422,7 +422,7 @@ public class Utils {
                         callback.onTaskCompleted(null);
                     }
                 } else {
-                    Log.e(TAG, "Error code " +
+                    Log.e(TAG, "Request \"/get-door-certificate\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());
@@ -455,7 +455,7 @@ public class Utils {
                     if (response.get("success").getAsBoolean()) {
                         callback.onTaskCompleted(true);
                     } else {
-                        Log.e(TAG, "Error code " +
+                        Log.e(TAG, "Request \"/redeem-invite\" - Error code " +
                                 response.get("code").getAsString() +
                                 ": " +
                                 response.get("msg").getAsString());
@@ -487,7 +487,7 @@ public class Utils {
 
                     callback.onTaskCompleted(locks);
                 } else {
-                    Log.e(TAG, "Error code " +
+                    Log.e(TAG, "Request \"/get-user-locks\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());
@@ -513,7 +513,7 @@ public class Utils {
                 if (response.get("success").getAsBoolean()) {
                     callback.onTaskCompleted(true);
                 } else {
-                    Log.e(TAG, "Error code " +
+                    Log.e(TAG, "Request \"/set-user-locks\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());
@@ -539,7 +539,7 @@ public class Utils {
                 if (response.get("success").getAsBoolean()) {
                     callback.onTaskCompleted(true);
                 } else {
-                    Log.e(TAG, "Error code " +
+                    Log.e(TAG, "Request \"/delete-user-lock\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());
@@ -567,12 +567,86 @@ public class Utils {
                 }
 
             } else {
-                Log.e(TAG, "Error code " +
+                Log.e(TAG, "Request \"/get-all-icons\" - Error code " +
                         response.get("code").getAsString() +
                         ": " +
                         response.get("msg").getAsString());
             }
         })).execute(SERVER_URL + "/get-all-icons");
+    }
+
+    public static void saveUserInvite(String userInviteId, OnTaskCompleted<Boolean> callback) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            callback.onTaskCompleted(false);
+            return;
+        }
+
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+
+            JsonObject data = new JsonObject();
+            data.addProperty("id_token", tokenId);
+            data.addProperty("invite_id", userInviteId);
+
+            (new httpPostRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    callback.onTaskCompleted(true);
+                } else {
+                    Log.e(TAG, "Request \"/save-user-invite\" - Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                }
+            }, data.toString())).execute(SERVER_URL + "/save-user-invite");
+        });
+    }
+
+    public static void checkUserSavedInvite(OnTaskCompleted<Boolean> callback) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            callback.onTaskCompleted(false);
+            return;
+        }
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+
+            (new httpRequestJson(response -> {
+                if (response.get("success").getAsBoolean()) {
+                    callback.onTaskCompleted(response.get("got_invite").getAsBoolean());
+                } else {
+                    Log.e(TAG, "Request \"/check-user-invite\" - Error code " +
+                            response.get("code").getAsString() +
+                            ": " +
+                            response.get("msg").getAsString());
+                }
+            })).execute(SERVER_URL + "/check-user-invite?id_token=" + tokenId);
+        });
+    }
+
+    public static void redeemUserInvite(String lockMAC, Context context, OnTaskCompleted<Boolean> callback) {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+            String tokenId = result.getToken();
+            String username = GlobalValues.getInstance().getCurrentUsername();
+
+            Utils.getPublicKeyBase64FromDatabase(lockMAC, context, keyRSA -> {
+                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + username, keyRSA);
+                Log.i(TAG, "redeemInvite: token " + tokenId);
+                JsonObject data = new JsonObject();
+                data.addProperty("id_token", tokenId);
+                data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
+
+                (new Utils.httpPostRequestJson(response -> {
+                    if (response.get("success").getAsBoolean()) {
+                        callback.onTaskCompleted(true);
+                    } else {
+                        Log.e(TAG, "Request \"/redeem-user-invite\" - Error code " +
+                                response.get("code").getAsString() +
+                                ": " +
+                                response.get("msg").getAsString());
+                        callback.onTaskCompleted(false);
+                    }
+                }, data.toString())).execute(SERVER_URL + "/redeem-user-invite");
+            });
+        });
     }
 
     /*** -------------------------------------------- ***/
@@ -678,7 +752,7 @@ public class Utils {
                     }
 
                 } else {
-                    Log.e(TAG, "Error code " +
+                    Log.e(TAG, "Request \"/remote-connection\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());

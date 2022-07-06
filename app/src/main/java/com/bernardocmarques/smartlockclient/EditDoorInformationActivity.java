@@ -3,6 +3,7 @@ package com.bernardocmarques.smartlockclient;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -61,6 +62,13 @@ public class EditDoorInformationActivity extends AppCompatActivity {
         findViewById(R.id.btn_save).setOnClickListener(view -> {
             Utils.setUserLock(lock, success -> {
                 if (success) {
+
+                    // fixme Consider changing to Activity Result API v
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("lock", lock.getSerializable());
+                    setResult(Activity.RESULT_OK, resultIntent);
+                    // fixme Consider changing to Activity Result API ^
+
                     finish();
                 }
             });
@@ -81,7 +89,7 @@ public class EditDoorInformationActivity extends AppCompatActivity {
         ImageView previewIcon = cardPreviewInclude.findViewById(R.id.lock_card_image_view);
         TextView previewName = cardPreviewInclude.findViewById(R.id.lock_card_text_view);
 
-
+        Log.e(TAG, "createUI: " + lock.getName());
         lockNameEditText.setText(lock.getName());
         previewName.setText(lock.getName());
 

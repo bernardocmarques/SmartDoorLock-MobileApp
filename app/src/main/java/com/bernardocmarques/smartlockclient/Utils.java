@@ -4,6 +4,8 @@ import static java.lang.Long.parseLong;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -68,6 +70,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Observable;
+import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -176,10 +179,21 @@ public class Utils {
         return commActivity.getRSAUtil().encrypt("SSC " + key);
     }
 
-    public static String generateAuthCredentials(CommActivity commActivity, String seed) {
-        String username = GlobalValues.getInstance().getCurrentUsername();
-        String authCode = Utils.KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, commActivity.getLockId() + username);
-        return "SAC " + username + " " + authCode;
+    public static void generateAuthCredentials(CommActivity commActivity, String seed, OnTaskCompleted<String> callback) {
+        try {
+            String phoneId = Utils.getPhoneId(commActivity.getActivity().getApplicationContext());
+            String authCode = KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, commActivity.getLockId() + phoneId);
+            callback.onTaskCompleted("SAC " + phoneId + " " + authCode);
+        } catch (KeyStoreUtil.NonExistingMasterKey nonExistingMasterKey) {
+
+            redeemUserInvite(commActivity.getLockId(), commActivity.getActivity().getApplicationContext(), success -> {
+                if (success) {
+                    generateAuthCredentials(commActivity, seed, callback);
+                }
+            });
+
+        }
+
     }
 
     /*** -------------------------------------------- ***/
@@ -202,6 +216,17 @@ public class Utils {
         Pattern pattern = Pattern.compile(query.replace(" ", "(.)*"), Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(target);
         return matcher.find();
+    }
+
+    private static final String ALLOWED_CHARACTERS ="0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
+
+    private static String getRandomString(final int sizeOfRandomString)
+    {
+        final Random random=new Random();
+        final StringBuilder sb=new StringBuilder(sizeOfRandomString);
+        for(int i=0;i<sizeOfRandomString;++i)
+            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
+        return sb.toString();
     }
 
     /*** -------------------------------------------- ***/
@@ -388,20 +413,26 @@ public class Utils {
         });
     }
 
-    public static void getUsernameFromDatabase(OnTaskCompleted<String> callback) {
+    public static void registerPhoneId(Context context, OnTaskCompleted<Boolean> callback) {
         Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
-            (new httpRequestJson(response -> {
+
+            JsonObject data = new JsonObject();
+            data.addProperty("id_token", tokenId);
+            data.addProperty("phone_id", getPhoneId(context));
+
+
+            (new httpPostRequestJson(response -> {
                 if (response.get("success").getAsBoolean()) {
-                    String username = response.get("username").getAsString();
-                    callback.onTaskCompleted(username);
+                    callback.onTaskCompleted(true);
                 } else {
-                    Log.e(TAG, "Request \"/get-username\" - Error code " +
+                    Log.e(TAG, "Request \"/register-phone-id\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
                             response.get("msg").getAsString());
+                    callback.onTaskCompleted(false);
                 }
-            })).execute(SERVER_URL + "/get-username?id_token=" + tokenId);
+            }, data.toString())).execute(SERVER_URL + "/register-phone-id");
         });
     }
 
@@ -441,14 +472,15 @@ public class Utils {
     public static void redeemInvite(String lockMAC, String inviteID, Context context, OnTaskCompleted<Boolean> callback) {
         Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
-            String username = GlobalValues.getInstance().getCurrentUsername();
+            String phoneId = Utils.getPhoneId(context);
 
             Utils.getPublicKeyBase64FromDatabase(lockMAC, context, keyRSA -> {
-                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + username, keyRSA);
+                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + phoneId, keyRSA);
                 Log.i(TAG, "redeemInvite: token " + tokenId);
                 JsonObject data = new JsonObject();
                 data.addProperty("id_token", tokenId);
                 data.addProperty("invite_id", inviteID);
+                data.addProperty("phone_id", phoneId);
                 data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
 
                 (new Utils.httpPostRequestJson(response -> {
@@ -625,13 +657,14 @@ public class Utils {
     public static void redeemUserInvite(String lockMAC, Context context, OnTaskCompleted<Boolean> callback) {
         Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
             String tokenId = result.getToken();
-            String username = GlobalValues.getInstance().getCurrentUsername();
+            String phoneId = Utils.getPhoneId(context);
 
             Utils.getPublicKeyBase64FromDatabase(lockMAC, context, keyRSA -> {
-                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + username, keyRSA);
+                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + phoneId, keyRSA);
                 Log.i(TAG, "redeemInvite: token " + tokenId);
                 JsonObject data = new JsonObject();
                 data.addProperty("id_token", tokenId);
+                data.addProperty("phone_id", phoneId);
                 data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
 
                 (new Utils.httpPostRequestJson(response -> {
@@ -681,16 +714,18 @@ public class Utils {
         remoteConnection(commActivity, sessionCredentialsRequest, false, false,
                 responseSplitSSC -> {
                     if (responseSplitSSC[0].equals("RAC")) {
-                        remoteConnection(commActivity, generateAuthCredentials(commActivity, responseSplitSSC[1]), true, false,
-                                responseSplitSAC -> {
-                                    if (responseSplitSAC[0].equals("ACK")) {
+                        Utils.generateAuthCredentials(commActivity, responseSplitSSC[1], authCredential -> {
+                            remoteConnection(commActivity, authCredential, true, false,
+                                    responseSplitSAC -> {
+                                        if (responseSplitSAC[0].equals("ACK")) {
 
-                                        remoteConnection(commActivity, cmd, true, true, callback);
+                                            remoteConnection(commActivity, cmd, true, true, callback);
 
-                                    } else { // command not ACK
-                                        Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
-                                    }
-                                });
+                                        } else { // command not ACK
+                                            Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
+                                        }
+                                    });
+                        });
                     }
                 });
     }
@@ -765,6 +800,26 @@ public class Utils {
     }
 
 
+
+    /*** -------------------------------------------- ***/
+    /*** --------------- Shared Prefs --------------- ***/
+    /*** -------------------------------------------- ***/
+
+    public static String getPhoneId(Context context) {
+        SharedPreferences sharedPref = context.getSharedPreferences(String.valueOf(R.string.phone_id_preference_file_key), Context.MODE_PRIVATE);
+        String phoneId = sharedPref.getString("phoneId", null);
+
+        if (phoneId == null) {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            phoneId = getRandomString(15);
+            editor.putString("phoneId", phoneId);
+            editor.apply();
+        }
+
+        return phoneId;
+    }
+
+
     /*** -------------------------------------------- ***/
     /*** ----------------- KeyStore ----------------- ***/
     /*** -------------------------------------------- ***/
@@ -773,6 +828,12 @@ public class Utils {
 
         private static KeyStoreUtil INSTANCE = null;
         KeyStore keyStore;
+
+        public static class NonExistingMasterKey extends Exception {
+            public NonExistingMasterKey(String id) {
+                super("The key with id \"" + id + "\" does not exist.");
+            }
+        }
 
 
         private KeyStoreUtil() {
@@ -822,10 +883,16 @@ public class Utils {
             }
         }
 
-        public String hmacBase64WithMasterKey(String dataBase64, String keyID) {
+        public String hmacBase64WithMasterKey(String dataBase64, String keyID) throws NonExistingMasterKey {
             Log.i(TAG, "hmac with key id: " + keyID);
 
+
             try {
+
+                if (!keyStore.containsAlias(keyID)) {
+                    throw new NonExistingMasterKey(keyID);
+                }
+
                 SecretKey masterKey = (SecretKey) keyStore.getKey(keyID, null);
                 Mac mac = Mac.getInstance("HmacSHA256");
                 mac.init(masterKey);

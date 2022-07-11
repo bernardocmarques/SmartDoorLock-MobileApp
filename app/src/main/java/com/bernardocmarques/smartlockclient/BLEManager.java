@@ -16,6 +16,8 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.auth.OAuthCredential;
+
 import java.util.Arrays;
 
 public class BLEManager {
@@ -89,7 +91,7 @@ public class BLEManager {
                 responseSplitSSC -> {
                     if (responseSplitSSC[0].equals("ACK")) {
 
-                        sendCommandAndReceiveResponse(commActivity, "RFI " + GlobalValues.getInstance().getCurrentUsername(), callback);
+                        sendCommandAndReceiveResponse(commActivity, "RFI " + Utils.getPhoneId(commActivity.getActivity().getApplicationContext()), callback);
 
                     } else { // command not ACK
                         Log.e(TAG, "Error: Should have received ACK command");
@@ -106,16 +108,18 @@ public class BLEManager {
                 responseSplitSSC -> {
                     if (responseSplitSSC[0].equals("RAC")) {
 
-                        sendCommandAndReceiveResponse(commActivity, Utils.generateAuthCredentials(commActivity, responseSplitSSC[1]),
-                                responseSplitSAC -> {
-                                    if (responseSplitSAC[0].equals("ACK")) {
+                        Utils.generateAuthCredentials(commActivity, responseSplitSSC[1], authCredential -> {
+                            sendCommandAndReceiveResponse(commActivity, authCredential,
+                                    responseSplitSAC -> {
+                                        if (responseSplitSAC[0].equals("ACK")) {
 
-                                        sendCommandAndReceiveResponse(commActivity, cmd, callback);
+                                            sendCommandAndReceiveResponse(commActivity, cmd, callback);
 
-                                    } else { // command not ACK
-                                        Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
-                                    }
-                                });
+                                        } else { // command not ACK
+                                            Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
+                                        }
+                                    });
+                        });
 
                     } else { // command not RAC
                         Log.e(TAG, "Error: Should have received RAC command");

@@ -77,5 +77,6 @@
     <string name="delete_smart_lock_dialog_delete_btn">Yes, delete this smart lock</string>
     <string name="delete_smart_lock_dialog_not_delete_btn">No, don\'t delete smart lock</string>
     <string name="CREATE_NEW_INVITE">Create new invite</string>
+    <string name="phone_id_preference_file_key">UTILS_SHARED_PREFS</string>
 
 </resources>

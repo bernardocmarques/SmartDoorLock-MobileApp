@@ -150,8 +150,11 @@ public class LoginActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
 
-                            Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));
+                            GlobalValues.getInstance().setPhoneIdRegistered(false);
 
+                            if (FirebaseAuth.getInstance().getCurrentUser() != null && !GlobalValues.getInstance().isPhoneIdRegistered()) {
+                                Utils.registerPhoneId(getApplicationContext(), ignored -> GlobalValues.getInstance().setPhoneIdRegistered(true));
+                            }
                             // got user
                             assert user != null;
                             finish();
@@ -225,7 +228,11 @@ public class LoginActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
 
-                            Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));
+                            GlobalValues.getInstance().setPhoneIdRegistered(false);
+
+                            if (FirebaseAuth.getInstance().getCurrentUser() != null && !GlobalValues.getInstance().isPhoneIdRegistered()) {
+                                Utils.registerPhoneId(getApplicationContext(), ignored -> GlobalValues.getInstance().setPhoneIdRegistered(true));
+                            }
 
                             finish();
                         } else {

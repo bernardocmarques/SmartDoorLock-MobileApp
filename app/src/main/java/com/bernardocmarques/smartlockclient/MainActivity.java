@@ -51,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
                                 Manifest.permission.ACCESS_FINE_LOCATION, false);
                         Boolean coarseLocationGranted = result.getOrDefault(
                                 Manifest.permission.ACCESS_COARSE_LOCATION,false);
+
+                        if (result.isEmpty()) {
+                            return;
+                        }
+
                         if ((fineLocationGranted != null && fineLocationGranted) ||
                                 (coarseLocationGranted != null && coarseLocationGranted)) {
                             initBluetooth();
@@ -113,9 +118,8 @@ public class MainActivity extends AppCompatActivity {
         // Set sidebar
         sidebar = new Sidebar(this);
 
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-
-            Utils.getUsernameFromDatabase(username -> GlobalValues.getInstance().setCurrentUsername(username));
+        if (FirebaseAuth.getInstance().getCurrentUser() != null && !GlobalValues.getInstance().isPhoneIdRegistered()) {
+            Utils.registerPhoneId(getApplicationContext(), ignored -> GlobalValues.getInstance().setPhoneIdRegistered(true));
         }
 
         if (!gotLocationPermission()) {

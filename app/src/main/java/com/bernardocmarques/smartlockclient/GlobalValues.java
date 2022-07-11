@@ -8,8 +8,9 @@ public class GlobalValues {
 
     private static GlobalValues INSTANCE = null;
 
-    private String currentUsername = null;
     private HashMap<String, Lock> userLocksMap = new HashMap<>();
+
+    private boolean phoneIdRegistered = false;
 
     private GlobalValues() { };
 
@@ -18,15 +19,6 @@ public class GlobalValues {
             INSTANCE = new GlobalValues();
         }
         return(INSTANCE);
-    }
-
-
-    public String getCurrentUsername() {
-        return currentUsername;
-    }
-
-    public void setCurrentUsername(String currentUsername) {
-        this.currentUsername = currentUsername;
     }
 
     public Lock getUserLockById(String lockId) {
@@ -39,5 +31,13 @@ public class GlobalValues {
 
     public void clearUserLocksMap() {
         this.userLocksMap = new HashMap<>();
+    }
+
+    public boolean isPhoneIdRegistered() {
+        return phoneIdRegistered;
+    }
+
+    public void setPhoneIdRegistered(boolean phoneIdRegistered) {
+        this.phoneIdRegistered = phoneIdRegistered;
     }
 }

@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
 import android.icu.text.SimpleDateFormat;
 import android.icu.util.TimeZone;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
@@ -181,12 +182,12 @@ public class Utils {
 
     public static void generateAuthCredentials(CommActivity commActivity, String seed, OnTaskCompleted<String> callback) {
         try {
-            String phoneId = Utils.getPhoneId(commActivity.getActivity().getApplicationContext());
+            String phoneId = Utils.getPhoneId(commActivity.getContext());
             String authCode = KeyStoreUtil.getInstance().hmacBase64WithMasterKey(seed, commActivity.getLockId() + phoneId);
             callback.onTaskCompleted("SAC " + phoneId + " " + authCode);
         } catch (KeyStoreUtil.NonExistingMasterKey nonExistingMasterKey) {
 
-            redeemUserInvite(commActivity.getLockId(), commActivity.getActivity().getApplicationContext(), success -> {
+            redeemUserInvite(commActivity.getLockId(), commActivity.getContext().getApplicationContext(), success -> {
                 if (success) {
                     generateAuthCredentials(commActivity, seed, callback);
                 }
@@ -202,6 +203,51 @@ public class Utils {
 
     static void forceLightModeOn() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+    }
+
+    /*** -------------------------------------------- ***/
+    /*** -------------- Location Utils -------------- ***/
+    /*** -------------------------------------------- ***/
+
+    public static String locationToString(Location location) {
+        if (location == null) {
+            return "";
+        }
+        return location.getLatitude() + "," + location.getLongitude();
+    }
+
+    public static Location locationFromString(String locationString) {
+        String[] locationStringSpliced = locationString.split(",");
+
+        if (locationStringSpliced.length != 2) {
+            return null;
+        }
+
+        Location location = new Location("");
+
+        location.setLatitude(Double.parseDouble(locationStringSpliced[0]));
+        location.setLongitude(Double.parseDouble(locationStringSpliced[1]));
+
+        return location;
+    }
+
+    public static double distanceBetweenLocationsInMeters(Location l1, Location l2) {
+
+        final int R = 6371; // Radius of the earth
+
+        double latDistance = Math.toRadians(l2.getLatitude() - l1.getLatitude());
+        double lonDistance = Math.toRadians(l2.getLongitude() - l1.getLongitude());
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(l1.getLatitude())) * Math.cos(Math.toRadians(l2.getLatitude()))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c * 1000; // convert to meters
+
+        double height = 0;
+
+        distance = Math.pow(distance, 2) + Math.pow(height, 2);
+
+        return Math.sqrt(distance);
     }
 
     /*** -------------------------------------------- ***/
@@ -607,7 +653,7 @@ public class Utils {
         })).execute(SERVER_URL + "/get-all-icons");
     }
 
-    public static void saveUserInvite(String userInviteId, OnTaskCompleted<Boolean> callback) {
+    public static void saveUserInvite(String userInviteId, String lockId, OnTaskCompleted<Boolean> callback) {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             callback.onTaskCompleted(false);
             return;
@@ -618,6 +664,7 @@ public class Utils {
 
             JsonObject data = new JsonObject();
             data.addProperty("id_token", tokenId);
+            data.addProperty("lock_id", lockId);
             data.addProperty("invite_id", userInviteId);
 
             (new httpPostRequestJson(response -> {
@@ -633,7 +680,7 @@ public class Utils {
         });
     }
 
-    public static void checkUserSavedInvite(OnTaskCompleted<Boolean> callback) {
+    public static void checkUserSavedInvite(String lockId, OnTaskCompleted<Boolean> callback) {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             callback.onTaskCompleted(false);
             return;
@@ -650,7 +697,7 @@ public class Utils {
                             ": " +
                             response.get("msg").getAsString());
                 }
-            })).execute(SERVER_URL + "/check-user-invite?id_token=" + tokenId);
+            })).execute(SERVER_URL + "/check-user-invite?id_token=" + tokenId + "&lock_id=" + lockId);
         });
     }
 
@@ -664,6 +711,7 @@ public class Utils {
                 Log.i(TAG, "redeemInvite: token " + tokenId);
                 JsonObject data = new JsonObject();
                 data.addProperty("id_token", tokenId);
+                data.addProperty("lock_id", lockMAC);
                 data.addProperty("phone_id", phoneId);
                 data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
 
@@ -696,7 +744,8 @@ public class Utils {
         void updateUIOnBLEDisconnected();
         void updateUIOnBLEConnected();
 
-        Activity getActivity();
+        Context getContext();
+
         RSAUtil getRSAUtil();
         AESUtil getAESUtil();
 
@@ -749,9 +798,9 @@ public class Utils {
             data.addProperty("close", close);
 
             (new Utils.httpPostRequestJson(response -> {
-                if (response.get("success").getAsBoolean()) {
+                if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
 
-                    Activity activity = commActivity.getActivity();
+                    Context context = commActivity.getContext();
 
                     String responseEnc = response.get("response").getAsString();
 
@@ -764,7 +813,7 @@ public class Utils {
                     String msg = commActivity.getAESUtil().decrypt(msgEncSplit[0], msgEncSplit[1]);
                     if (msg == null) {
                         Log.e(TAG, "Error decrypting message! Operation Canceled.");
-                        activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
+                        if (context instanceof Activity) ((Activity) context).runOnUiThread(() -> Toast.makeText(context.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
                         return;
                     }
 
@@ -782,7 +831,7 @@ public class Utils {
 
                     } else {
                         Log.e(TAG, "Message not valid! Operation Canceled.");
-                        activity.runOnUiThread(() -> Toast.makeText(activity.getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
+                        if (context instanceof Activity) ((Activity) context).runOnUiThread(() -> Toast.makeText(context.getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
                         callback.onResponseReceived(new String[]{"NAK"});
                     }
 
@@ -962,5 +1011,6 @@ public class Utils {
         cert.getSerialNumber();
         return cert;
     }
+
 
 }

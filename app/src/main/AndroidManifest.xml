@@ -8,7 +8,6 @@
         android:required="true" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
-
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -18,11 +17,14 @@
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -33,6 +35,11 @@
         android:theme="@style/Theme.SmartLockClient"
         android:usesCleartextTraffic="true"
         tools:replace="android:icon,android:theme">
+        <service
+            android:name=".ProximityUnlockService"
+            android:enabled="true"
+            android:foregroundServiceType="location|camera"
+            android:exported="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -54,34 +61,32 @@
         <activity
             android:name=".SetupNewLockActivity"
             android:exported="true">
-
-            <intent-filter
-                android:autoVerify="true">
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:scheme="https"
                     android:host="smartlocks.ga"
-                    android:path="/new-lock" />
+                    android:path="/new-lock"
+                    android:scheme="https" />
             </intent-filter>
 
+            <!-- <intent-filter> -->
+            <!-- <action android:name="android.intent.action.VIEW" /> -->
+            <!-- <category android:name="android.intent.category.DEFAULT" /> -->
+            <!-- <category android:name="android.intent.category.BROWSABLE" /> -->
+            <!-- <data android:scheme="https" /> -->
 
-            <!--            <intent-filter>-->
-            <!--                <action android:name="android.intent.action.VIEW" />-->
-            <!--                <category android:name="android.intent.category.DEFAULT" />-->
-            <!--                <category android:name="android.intent.category.BROWSABLE" />-->
-            <!--                <data android:scheme="https" />-->
 
-            <!--                <data android:host="smartlocks.ga" />-->
-            <!--                &lt;!&ndash; Accepts URIs that begin with "https://smartlocks.ga/new-lock” &ndash;&gt;-->
-            <!--&lt;!&ndash;                <data&ndash;&gt;-->
-            <!--&lt;!&ndash;                    android:host="smartlocks.ga"&ndash;&gt;-->
-            <!--&lt;!&ndash;                    android:scheme="https" />&ndash;&gt;-->
-            <!--&lt;!&ndash;                &lt;!&ndash; note that the leading "/" is required for pathPrefix &ndash;&gt;&ndash;&gt;-->
-            <!--            </intent-filter>-->
+            <!-- <data android:host="smartlocks.ga" /> -->
+            <!-- &lt;!&ndash; Accepts URIs that begin with "https://smartlocks.ga/new-lock” &ndash;&gt; -->
+            <!-- &lt;!&ndash;                <data&ndash;&gt; -->
+            <!-- &lt;!&ndash;                    android:host="smartlocks.ga"&ndash;&gt; -->
+            <!-- &lt;!&ndash;                    android:scheme="https" />&ndash;&gt; -->
+            <!-- &lt;!&ndash;                &lt;!&ndash; note that the leading "/" is required for pathPrefix &ndash;&gt;&ndash;&gt; -->
+            <!-- </intent-filter> -->
         </activity>
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"

@@ -78,5 +78,13 @@
     <string name="delete_smart_lock_dialog_not_delete_btn">No, don\'t delete smart lock</string>
     <string name="CREATE_NEW_INVITE">Create new invite</string>
     <string name="phone_id_preference_file_key">UTILS_SHARED_PREFS</string>
+    <string name="proximity_notification_title">Proximity Unlock Active</string>
+    <string name="proximity_notification_message">Smart Lock Client is using the GPS and BLE to automatically lock and unlock Smart Locks</string>
+    <string name="proximity_ticker_text">ticker test</string>
+    <string name="proximity_channel_name">Proximity Notification Channel</string>
+    <string name="channel_description">Notification for Proximity Unlock</string>
+    <string name="proximity_channel_ID">PROXIMITY_NOTIFICATION_CHANNEL</string>
+    <string name="lock_when_far">Lock when far</string>
+    <string name="unlock_when_near">Unlock when near</string>
 
 </resources>

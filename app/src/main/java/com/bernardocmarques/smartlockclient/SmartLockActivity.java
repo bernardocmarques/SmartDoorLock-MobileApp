@@ -27,6 +27,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,6 +62,9 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
     TextView connectedStateTextView;
     ImageView connectedStateIcon;
 
+    SwitchMaterial proximityUnlockSwitch;
+    SwitchMaterial proximityLockSwitch;
+
     boolean isConnected = false;
     boolean remoteConnect = false;
     boolean offline = false;
@@ -72,6 +76,11 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
 
         Bundle bundle = getIntent().getExtras();
         lock = Lock.fromSerializable(bundle.getSerializable("lock"));
+
+        assert lock != null;
+        Log.e(TAG, lock.getLocation() != null ? "onCreate: " + lock.getLocation().getLatitude() + ", " + lock.getLocation().getLongitude() : "null location");
+        Log.e(TAG, "Using lock with name: " + lock.getName() + " and id: " + lock.getId());
+
 
         findViews();
         createUI();
@@ -158,6 +167,7 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
             } else if (id == R.id.settings) {
                 Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
                 intent.putExtra("lock", lock.getSerializable());
+                intent.putExtra("bleConnected", isConnected && !remoteConnect);
 //                startActivity(intent);
                 startActivityForResult(intent, LOCK_EDIT_REQUEST_CODE); // fixme Consider changing to Activity Result API
             }
@@ -171,14 +181,53 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
         slideToUnlockView = findViewById(R.id.slide_to_unlock);
         connectedStateTextView = findViewById(R.id.connected_state_text);
         connectedStateIcon = findViewById(R.id.connected_state_icon);
+        proximityUnlockSwitch = findViewById(R.id.switch_proximity_unlock);
+        proximityLockSwitch = findViewById(R.id.switch_proximity_lock);
     }
 
     void createUI() {
         slideToUnlockView.setVisibility(View.INVISIBLE);
+
+        proximityLockSwitch.setChecked(this.lock.isProximityLockActive());
+        proximityUnlockSwitch.setChecked(this.lock.isProximityUnlockActive());
+
+        proximityLockSwitch.setEnabled(false);
+        proximityUnlockSwitch.setEnabled(false);
     }
 
     void createUIListeners() {
+        proximityLockSwitch.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+            lock.setProximityLockActive(isChecked);
+            proximityLockSwitch.setEnabled(false);
 
+            Utils.setUserLock(lock, success -> {
+                if (success) {
+                    GlobalValues.getInstance().updateProximityUnlockLocks(lock);
+                } else {
+                    lock.setProximityLockActive(!isChecked);
+                    proximityLockSwitch.setChecked(this.lock.isProximityLockActive());
+                }
+                proximityLockSwitch.setEnabled(true);
+            });
+        });
+
+        proximityUnlockSwitch.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+            lock.setProximityUnlockActive(isChecked);
+            proximityUnlockSwitch.setEnabled(false);
+
+            Utils.setUserLock(lock, success -> {
+                if (success) {
+                    GlobalValues.getInstance().updateProximityUnlockLocks(lock);
+                } else {
+                    lock.setProximityUnlockActive(!isChecked);
+                    proximityUnlockSwitch.setChecked(this.lock.isProximityUnlockActive());
+                }
+                proximityUnlockSwitch.setEnabled(true);
+            });
+        });
+
+        proximityLockSwitch.setEnabled(true);
+        proximityUnlockSwitch.setEnabled(true);
     }
 
 
@@ -266,10 +315,10 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 updateUIOnBLEDisconnected();
                 remoteConnect = true;
-                Utils.getPublicKeyBase64FromDatabase(lock.getId(), getActivity(), rsaKey -> {
+                Utils.getPublicKeyBase64FromDatabase(lock.getId(), getContext(), rsaKey -> {
                     Log.i(TAG, "onReceive: Entra aqui");
                     rsaUtil = new RSAUtil(rsaKey);
-                    getLockStateCommunication(ignore -> Utils.checkUserSavedInvite(gotInvite -> {
+                    getLockStateCommunication(ignore -> Utils.checkUserSavedInvite(getLockId(), gotInvite -> {
                         if (!gotInvite) {
                             requestUserInvite(ignore2 -> updateUIOnRemoteConnected());
                         } else {
@@ -285,9 +334,9 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 //                Log.d(TAG, "Teste: " + intent.getData());
             } else if (BluetoothLeService.ACTION_GATT_MTU_SIZE_CHANGED.equals(action)) {
-                Utils.getPublicKeyBase64FromDatabase(lock.getId(), getActivity(), rsaKey -> {
+                Utils.getPublicKeyBase64FromDatabase(lock.getId(), getContext(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
-                    getLockStateCommunication(ignore -> Utils.checkUserSavedInvite(gotInvite -> {
+                    getLockStateCommunication(ignore -> Utils.checkUserSavedInvite(getLockId(), gotInvite -> {
                         if (!gotInvite) {
                             requestUserInvite(ignore2 -> updateUIOnBLEConnected());
                         } else {
@@ -375,7 +424,7 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
                 if (inviteCode.length > 2) lockBLE = inviteCode[2];
 
 
-                Utils.saveUserInvite(inviteID, callback);
+                Utils.saveUserInvite(inviteID, lockMAC, callback);
 
             } else { // command not  ACK
                 Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
@@ -385,7 +434,7 @@ public class SmartLockActivity extends AppCompatActivity implements Utils.CommAc
 
 
     @Override
-    public Activity getActivity() {
+    public Context getContext() {
         return this;
     }
 

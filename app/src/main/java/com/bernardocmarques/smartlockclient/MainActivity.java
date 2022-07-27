@@ -8,6 +8,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -53,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
                                 Manifest.permission.ACCESS_COARSE_LOCATION,false);
 
                         if (result.isEmpty()) {
+                            Log.e(TAG, "Here");
                             return;
                         }
 
@@ -103,6 +109,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        CharSequence name = getString(R.string.proximity_channel_name);
+        String description = getString(R.string.channel_description);
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel channel = new NotificationChannel(getString(R.string.proximity_channel_ID), name, importance);
+        channel.setDescription(description);
+        // Register the channel with the system; you can't change the importance
+        // or other notification behaviors after this
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
+    }
+
 
 
     @Override
@@ -114,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
         Cache.getInstanceSmallFiles(getApplicationContext());
 
         setContentView(R.layout.activity_main);
+
+        createNotificationChannel();
 
         // Set sidebar
         sidebar = new Sidebar(this);
@@ -148,10 +170,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void requestLocationPermission() {
-        locationPermissionRequest.launch(new String[] {
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            locationPermissionRequest.launch(new String[] {
+//                    Manifest.permission.ACCESS_BACKGROUND_LOCATION, // fixme cant use this
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        } else {
+            locationPermissionRequest.launch(new String[] {
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        }
     }
 
     void createUIListeners() {
@@ -170,6 +200,13 @@ public class MainActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.main_toolbar).findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> sidebar.toggleSidebar());
 
+    }
+
+    private void initProximityUnlockForegroundService() {
+        if (!GlobalValues.getInstance().isProximityServiceRunning()) { // fixme uncomment
+            Intent intent = new Intent(this, ProximityUnlockService.class);
+            getApplicationContext().startForegroundService(intent);
+        }
     }
 
     public void loadUserLocks() {
@@ -223,6 +260,8 @@ public class MainActivity extends AppCompatActivity {
                 },0,100);
             }
 
+
+
             int remainder = locks.size() % 3;
 
             if (remainder != 0) {
@@ -233,6 +272,8 @@ public class MainActivity extends AppCompatActivity {
                     lockCardsFlexbox.addView(filler,  params);
                 }
             }
+
+            initProximityUnlockForegroundService();
         });
 
     }

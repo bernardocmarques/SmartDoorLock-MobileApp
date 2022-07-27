@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -346,6 +347,7 @@ public class SetupNewLockActivity extends AppCompatActivity implements Utils.Com
                 lock.setName("");
                 Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
                 intent.putExtra("lock", lock.getSerializable());
+                intent.putExtra("bleConnected", false);
                 startActivity(intent);
             }
         });
@@ -363,7 +365,7 @@ public class SetupNewLockActivity extends AppCompatActivity implements Utils.Com
     }
 
     @Override
-    public Activity getActivity() {
+    public Context getContext() {
         return this;
     }
 

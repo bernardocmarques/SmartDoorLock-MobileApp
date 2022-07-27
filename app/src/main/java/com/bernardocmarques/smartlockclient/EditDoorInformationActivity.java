@@ -3,9 +3,11 @@ package com.bernardocmarques.smartlockclient;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.Editable;
@@ -18,6 +20,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.flexbox.FlexboxLayout;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -33,9 +38,11 @@ public class EditDoorInformationActivity extends AppCompatActivity {
     private static final String TAG = "SmartLock@EditDoorInfoActivity";
 
     Lock lock;
+    boolean bleConnected;
 
     AlertDialog alertDialogIconPicker = null;
 
+    @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,9 +50,21 @@ public class EditDoorInformationActivity extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
         lock = Lock.fromSerializable(bundle.getSerializable("lock"));
+        bleConnected = bundle.getBoolean("bleConnected");
 
-        setActionBar();
-        createUI();
+        if (bleConnected) {
+            LocationServices.getFusedLocationProviderClient(this).getLastLocation()
+                    .addOnSuccessListener(this, location -> {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            lock.setLocation(location);
+                        }
+                        setActionBar();
+                        createUI();
+                    });
+        }
+
+
     }
 
     void setActionBar() {
@@ -60,6 +79,7 @@ public class EditDoorInformationActivity extends AppCompatActivity {
     private void createUI() {
 
         findViewById(R.id.btn_save).setOnClickListener(view -> {
+
             Utils.setUserLock(lock, success -> {
                 if (success) {
 

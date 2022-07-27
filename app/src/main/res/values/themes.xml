@@ -44,6 +44,12 @@
     </style>
 
 
+    <style name="ProximitySwitch" parent="Theme.MaterialComponents.DayNight">
+        <item name="colorOnSurface">@color/danger</item>
+        <item name="colorSecondary">@color/success</item>
+    </style>
+
+
     <!--    <style name="BLESwitch" parent="Theme.AppCompat.DayNight">-->
 <!--        &lt;!&ndash; active thumb & track color (30% transparency) &ndash;&gt;-->
 <!--        <item name="colorControlActivated">@color/blue_bluetooth</item>-->

@@ -46,6 +46,7 @@ public class SetupLockActivity extends AppCompatActivity implements Utils.CommAc
     CircularProgressIndicator loadingSpinner;
     ConstraintLayout overlay;
 
+
     private static final String TAG = "SmartLock@SetupLockActivity";
     Context context = this;
 
@@ -230,6 +231,7 @@ public class SetupLockActivity extends AppCompatActivity implements Utils.CommAc
                                             lock.setName("");
                                             Intent intent = new Intent(getApplicationContext(), EditDoorInformationActivity.class);
                                             intent.putExtra("lock", lock.getSerializable());
+                                            intent.putExtra("bleConnected", true);
                                             startActivity(intent);
                                         }
                                     });
@@ -273,7 +275,7 @@ public class SetupLockActivity extends AppCompatActivity implements Utils.CommAc
     void waitForEspReadyMessage() {
         bleManager.waitForReadyMessage(this, responseSplit -> {
             if (responseSplit[0].equals("LOK")) {
-                Utils.getPublicKeyBase64FromDatabase(getLockId(), getActivity(), rsaKey -> {
+                Utils.getPublicKeyBase64FromDatabase(getLockId(), getContext(), rsaKey -> {
                     rsaUtil = new RSAUtil(rsaKey);
                     updateUIOnBLEConnected();
                     requestFirstInvite();
@@ -385,7 +387,7 @@ public class SetupLockActivity extends AppCompatActivity implements Utils.CommAc
     }
 
     @Override
-    public Activity getActivity() {
+    public Context getContext() {
         return this;
     }
 

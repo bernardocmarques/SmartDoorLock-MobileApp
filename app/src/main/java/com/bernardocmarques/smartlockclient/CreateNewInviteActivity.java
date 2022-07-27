@@ -321,7 +321,7 @@ public class CreateNewInviteActivity extends AppCompatActivity implements Utils.
     }
 
     @Override
-    public Activity getActivity() {
+    public Context getContext() {
         return this;
     }
 

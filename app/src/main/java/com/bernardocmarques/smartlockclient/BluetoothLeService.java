@@ -512,8 +512,6 @@ public class BluetoothLeService extends Service {
     private boolean mScanning;
     private final Handler handler = new Handler();
 
-    // Stops scanning after 10 seconds.
-    private static final long SCAN_PERIOD = 10000;
 
     public boolean isScanning() {
         return mScanning;
@@ -542,19 +540,25 @@ public class BluetoothLeService extends Service {
                 .setReportDelay(0L)
                 .build();
 
+        scanLeDevice(leScanCallback, filters, scanSettings, 10000);
+    }
+
+    public void scanLeDevice(ScanCallback leScanCallback, List<ScanFilter> filters, ScanSettings scanSettings, long scan_period) {
+
         Log.i(TAG, "scanLeDevice: Start scanning.");
         if (!mScanning) {
             // Stops scanning after a predefined scan period.
             handler.postDelayed(() -> {
                 mScanning = false;
                 bluetoothLeScanner.stopScan(leScanCallback);
-            }, SCAN_PERIOD);
+            }, scan_period);
 
             mScanning = true;
             bluetoothLeScanner.startScan(filters, scanSettings, leScanCallback);
         } else {
-            mScanning = false;
-            bluetoothLeScanner.stopScan(leScanCallback);
+//            mScanning = false;
+//            bluetoothLeScanner.stopScan(leScanCallback);
+            Log.e(TAG, "scanLeDevice: Already scanning");
         }
     }
 

@@ -175,6 +175,9 @@ public class BLEManager {
     public void sendCommandAndReceiveResponse(Utils.CommActivity commActivity, String cmd, boolean encrypt, boolean decrypt, Utils.OnResponseReceived callback) {
         String msgEnc;
         Context context = commActivity.getContext();
+
+        Log.v(TAG, "Send -> \"" + cmd + "\"");
+
         if (encrypt)
             msgEnc = commActivity.getAESUtil().encrypt(new BLEMessage(cmd).toString());
         else
@@ -199,10 +202,16 @@ public class BLEManager {
                         if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                             String msgEnc = intent.getStringExtra(EXTRA_DATA);
 
+//                            if (msgEnc.equals("LOK")) {
+//                                sendCommandAndReceiveResponse(commActivity,cmd, encrypt, decrypt, callback);
+//                                return;
+//                            }
+
                             if (decrypt) {
                                 String[] msgEncSplit = msgEnc.split(" ");
 
-                                Log.w(TAG, "onReceive: " + msgEnc);
+                                Log.v(TAG, "onReceive: " + msgEnc);
+
                                 if (msgEncSplit.length < 2) {
                                     Log.e(TAG, "Less then 2");
                                     return;

@@ -79,14 +79,14 @@ class AESUtil {
         strToDecrypt = strToDecrypt.replace("\n", "").replace("\r", "");
         ivString = ivString.replace("\n", "").replace("\r", "");
 
-        Log.w(TAG, "'" + strToDecrypt + "'");
-        Log.w(TAG, "'" + ivString + "'");
+//        Log.w(TAG, "'" + strToDecrypt + "'");
+//        Log.w(TAG, "'" + ivString + "'");
 
         byte[] cipheredText = Base64.decode(strToDecrypt, Base64.NO_WRAP);
-        Log.w(TAG, Arrays.toString(cipheredText));
+//        Log.w(TAG, Arrays.toString(cipheredText));
 
         IvParameterSpec ivSpec = new IvParameterSpec(Base64.decode(ivString, Base64.NO_WRAP));
-        Log.w(TAG, Arrays.toString(ivSpec.getIV()));
+//        Log.w(TAG, Arrays.toString(ivSpec.getIV()));
 
         try {
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");

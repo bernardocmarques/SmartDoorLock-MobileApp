@@ -51,8 +51,6 @@ class RSAUtil {
             cipher.init(Cipher.ENCRYPT_MODE, rsaPublicKey);
             encryptedBytes = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
 
-            Log.w(TAG, encryptedBytes.length + "");
-
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException | InvalidKeySpecException e) {
             e.printStackTrace();
         }

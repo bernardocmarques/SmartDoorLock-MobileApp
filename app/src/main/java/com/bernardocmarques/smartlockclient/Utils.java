@@ -90,7 +90,7 @@ public class Utils {
     public static int THUMBNAIL_SIZE_MEDIUM = 256;
 
     public static String SERVER_URL = "https://server.smartlocks.ga";
-//    public static String SERVER_URL = "http://192.168.1.7:5000";
+//    public static String SERVER_URL = "http://192.168.1.104:5000";
 
 
     public enum UserType {
@@ -529,7 +529,8 @@ public class Utils {
                 data.addProperty("phone_id", phoneId);
                 data.addProperty("master_key_encrypted_lock", masterKeyEncryptedLock);
 
-                (new Utils.httpPostRequestJson(response -> {
+                (new httpPostRequestJson(response -> {
+                    Log.e(TAG, "redeemInvite: " + response);
                     if (response.get("success").getAsBoolean()) {
                         callback.onTaskCompleted(true);
                     } else {
@@ -836,10 +837,10 @@ public class Utils {
                     }
 
                 } else {
-                    Log.e(TAG, "Request \"/remote-connection\" - Error code " +
+                    Log.e(TAG, response != null ? "Request \"/remote-connection\" - Error code " +
                             response.get("code").getAsString() +
                             ": " +
-                            response.get("msg").getAsString());
+                            response.get("msg").getAsString() : "Request \"/remote-connection\" - Null Response");
                     callback.onResponseReceived(new String[]{"NAK"});
                 }
             }, data.toString())).execute(SERVER_URL + "/remote-connection");

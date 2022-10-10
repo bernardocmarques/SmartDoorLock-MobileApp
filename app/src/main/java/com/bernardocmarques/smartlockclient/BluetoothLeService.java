@@ -426,7 +426,7 @@ public class BluetoothLeService extends Service {
                 disconnect();
                 broadcastUpdate(ACTION_GATT_DISCONNECTED);
             }
-        }, 5000);
+        }, 35000);
 
         return true;
     }

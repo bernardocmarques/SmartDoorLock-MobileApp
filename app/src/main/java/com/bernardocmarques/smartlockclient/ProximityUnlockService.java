@@ -502,7 +502,7 @@ public class ProximityUnlockService extends Service {
         locationRequest = LocationRequest.create();
         locationRequest.setInterval(LOCATION_UPDATE_INTERVAL_HIGH);
         locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL_HIGH);
-        locationRequest.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setPriority(Priority.PRIORITY_LOW_POWER);
 //        locationRequest.setFastestInterval(5000L); // fixme remove
 
     }
@@ -511,7 +511,7 @@ public class ProximityUnlockService extends Service {
         locationRequest = LocationRequest.create();
         locationRequest.setInterval(LOCATION_UPDATE_INTERVAL_LOW);
         locationRequest.setMaxWaitTime(LOCATION_UPDATE_MAX_WAIT_INTERVAL_LOW);
-        locationRequest.setPriority(Priority.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setPriority(Priority.PRIORITY_LOW_POWER);
 //        locationRequest.setFastestInterval(5000L); // fixme remove
 
     }

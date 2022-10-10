@@ -106,8 +106,6 @@ public class CreateAccountActivity extends AppCompatActivity {
     void createAccount(View v) {
         boolean error = false;
 
-
-
         String email = Objects.requireNonNull(emailInputLayout.getEditText()).getText().toString();
         String password = Objects.requireNonNull(passwordInputLayout.getEditText()).getText().toString();
         String confirmPassword = Objects.requireNonNull(confirmPasswordInputLayout.getEditText()).getText().toString();

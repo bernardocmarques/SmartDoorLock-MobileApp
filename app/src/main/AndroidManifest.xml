@@ -17,14 +17,12 @@
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -35,11 +33,15 @@
         android:theme="@style/Theme.SmartLockClient"
         android:usesCleartextTraffic="true"
         tools:replace="android:icon,android:theme">
+        <activity
+            android:name=".TestActivity"
+            android:exported="false" />
+
         <service
             android:name=".ProximityUnlockService"
             android:enabled="true"
-            android:foregroundServiceType="location|camera"
-            android:exported="true" />
+            android:exported="true"
+            android:foregroundServiceType="location|camera" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -818,7 +818,7 @@ public class Utils {
                         return;
                     }
 
-                    Log.e(TAG, "Received: "  + msg);
+//                    Log.e(TAG, "Received: "  + msg);
 
 
                     String[] msgSplit = msg.split(" ");
@@ -934,7 +934,7 @@ public class Utils {
         }
 
         public String hmacBase64WithMasterKey(String dataBase64, String keyID) throws NonExistingMasterKey {
-            Log.i(TAG, "hmac with key id: " + keyID);
+//            Log.i(TAG, "hmac with key id: " + keyID);
 
 
             try {

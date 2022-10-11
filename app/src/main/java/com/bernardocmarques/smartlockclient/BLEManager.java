@@ -176,7 +176,7 @@ public class BLEManager {
         String msgEnc;
         Context context = commActivity.getContext();
 
-        Log.v(TAG, "Send -> \"" + cmd + "\"");
+//        Log.v(TAG, "Send -> \"" + cmd + "\"");  //fixme remove or uncomment
 
         if (encrypt)
             msgEnc = commActivity.getAESUtil().encrypt(new BLEMessage(cmd).toString());
@@ -210,8 +210,6 @@ public class BLEManager {
                             if (decrypt) {
                                 String[] msgEncSplit = msgEnc.split(" ");
 
-                                Log.v(TAG, "onReceive: " + msgEnc);
-
                                 if (msgEncSplit.length < 2) {
                                     Log.e(TAG, "Less then 2");
                                     return;
@@ -228,7 +226,6 @@ public class BLEManager {
 
                                 BLEMessage bleMessage = new BLEMessage(String.join(" ", Arrays.copyOfRange(msgSplit, 0, sizeCmdSplit-3)),  parseLong(msgSplit[sizeCmdSplit-3]), parseLong(msgSplit[sizeCmdSplit-2]), parseLong(msgSplit[sizeCmdSplit-1]));
 //                            BLEMessage bleMessage = new BLEMessage(cmd);
-                                Log.e(TAG, "onReceive: " + bleMessage.message);
                                 if (bleMessage.isValid()) {
                                     String[] cmdSplit = bleMessage.message.split(" ");
                                     callback.onResponseReceived(cmdSplit);
@@ -253,12 +250,9 @@ public class BLEManager {
 
         sendCommandAndReceiveResponse(commActivity,"PNG", false, false,
                 responseSplit -> {
-                    Log.e(TAG, "waitForReadyMessage: " + responseSplit[0]);
                     if (responseSplit[0].equals("LOK")) {
-                        Log.e(TAG, "waitForReadyMessage: nao esperar");
                         callback.onResponseReceived(responseSplit);
                     } else {
-                        Log.e(TAG, "waitForReadyMessage: esperar");
                         Context context = commActivity.getContext();
 
                         context.registerReceiver(
@@ -270,7 +264,6 @@ public class BLEManager {
                                         final String action = intent.getAction();
                                         if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                                             String data = intent.getStringExtra(EXTRA_DATA);
-                                            Log.e(TAG, "onReceive2: " + data);
                                             if (data.equals("LOK")) {  // Lock OK
                                                 callback.onResponseReceived(new String[]{"LOK"});
                                             } else {

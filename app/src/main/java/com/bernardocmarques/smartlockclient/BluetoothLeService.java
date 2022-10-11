@@ -175,7 +175,7 @@ public class BluetoothLeService extends Service {
             }
 
             if(characteristic == writeCharacteristic) { // NOPMD - test object identity
-                Log.d(TAG,"write finished, status="+status);
+//                Log.d(TAG,"write finished, status="+status);
                 writeNext();
             }
         }
@@ -196,7 +196,7 @@ public class BluetoothLeService extends Service {
                 if (!mBluetoothGatt.writeCharacteristic(writeCharacteristic)) {
                     Log.e(TAG,"write failed");
                 } else {
-                    Log.d(TAG,"write started, len="+data.length);
+//                    Log.d(TAG,"write started, len="+data.length);
                 }
             }
         }
@@ -215,7 +215,7 @@ public class BluetoothLeService extends Service {
 
             if(characteristic == readCharacteristic) { // NOPMD - test object identity
                 byte[] data = readCharacteristic.getValue();
-                Log.d(TAG,"read, len="+data.length);
+//                Log.d(TAG,"read, len="+data.length);
             }
         }
 
@@ -225,7 +225,7 @@ public class BluetoothLeService extends Service {
 
             if(characteristic == readCharacteristic) { // NOPMD - test object identity
                 byte[] data = readCharacteristic.getValue();
-                Log.d(TAG,"read, len="+data.length);
+//                Log.d(TAG,"read, len="+data.length);
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
 
@@ -283,7 +283,7 @@ public class BluetoothLeService extends Service {
                 Log.e(TAG,"write failed");
                 return false;
             } else {
-                Log.d(TAG,"write started, len="+data0.length);
+//                Log.d(TAG,"write started, len="+data0.length);
                 return true;
             }
         } else {
@@ -305,10 +305,10 @@ public class BluetoothLeService extends Service {
 
         if (characteristic == readCharacteristic) {
             final byte[] data = characteristic.getValue();
-            Log.e(TAG, "broadcastUpdate: " + Arrays.toString(data));
+//            Log.e(TAG, "broadcastUpdate: " + Arrays.toString(data));
             if (data[data.length-1] != 4) {
                 pendingMsg += new String(data);
-                Log.e(TAG, "appending message");
+//                Log.e(TAG, "appending message");
                 return;
             } else {
                 String str = new String(data);

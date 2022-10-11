@@ -92,9 +92,12 @@ public class MainActivity extends AppCompatActivity {
             });
 
     boolean gotBluetoothPermission() {
+        Log.i(TAG, "gotBluetoothPermission: ");
         if (Build.VERSION.SDK_INT >= 31) {
             return ContextCompat.checkSelfPermission(
                     getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) ==
+                    PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+                    getApplicationContext(), Manifest.permission.BLUETOOTH_SCAN) ==
                     PackageManager.PERMISSION_GRANTED;
         } else {
             return true;
@@ -102,9 +105,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void requestBluetoothPermission() {
+        Log.i(TAG, "requestBluetoothPermission: ");
         if (Build.VERSION.SDK_INT >= 31) {
+            Log.i(TAG, "requestBluetoothPermission: if");
+
             bluetoothPermissionRequest.launch(new String[] {
-                    Manifest.permission.BLUETOOTH_CONNECT
+                    Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN
             });
         }
     }
@@ -144,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
             Utils.registerPhoneId(getApplicationContext(), ignored -> GlobalValues.getInstance().setPhoneIdRegistered(true));
         }
 
+        Log.i(TAG, "onCreate: " + !gotLocationPermission());
         if (!gotLocationPermission()) {
             requestLocationPermission();
         } else {
@@ -152,7 +159,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void initBluetooth() {
+        Log.i(TAG, "initBluetooth: ");
         if (!gotBluetoothPermission()) {
+            Log.i(TAG, "initBluetooth: if 1");
             requestBluetoothPermission();
         } else {
             createUIListeners();
@@ -216,6 +225,8 @@ public class MainActivity extends AppCompatActivity {
 
         Utils.getUserLocks(locks -> {
 
+
+
             LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
 
             final float scale = this.getResources().getDisplayMetrics().density;
@@ -235,7 +246,11 @@ public class MainActivity extends AppCompatActivity {
                 lockCardsFlexbox.addView(lockCard, params);
 
                 lockCard.setOnClickListener(view -> {
-                    Intent intent = new Intent(getApplicationContext(), SmartLockActivity.class);
+                    // fixme remove test vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+                    Intent intent = new Intent(getApplicationContext(), TestActivity.class);
+//                    Intent intent = new Intent(getApplicationContext(), SmartLockActivity.class);
+                    // fixme remove test ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                     intent.putExtra("lock", lock.getSerializable());
                     startActivity(intent);
                 });

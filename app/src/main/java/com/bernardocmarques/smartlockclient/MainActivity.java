@@ -181,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
     void requestLocationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             locationPermissionRequest.launch(new String[] {
-//                    Manifest.permission.ACCESS_BACKGROUND_LOCATION, // fixme cant use this
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION
             });
@@ -212,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initProximityUnlockForegroundService() {
-        if (!GlobalValues.getInstance().isProximityServiceRunning()) { // fixme uncomment
+        if (!GlobalValues.getInstance().isProximityServiceRunning()) {
             Intent intent = new Intent(this, ProximityUnlockService.class);
             getApplicationContext().startForegroundService(intent);
         }
@@ -246,11 +245,7 @@ public class MainActivity extends AppCompatActivity {
                 lockCardsFlexbox.addView(lockCard, params);
 
                 lockCard.setOnClickListener(view -> {
-                    // fixme remove test vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-                    Intent intent = new Intent(getApplicationContext(), TestActivity.class);
-//                    Intent intent = new Intent(getApplicationContext(), SmartLockActivity.class);
-                    // fixme remove test ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    Intent intent = new Intent(getApplicationContext(), SmartLockActivity.class);
                     intent.putExtra("lock", lock.getSerializable());
                     startActivity(intent);
                 });

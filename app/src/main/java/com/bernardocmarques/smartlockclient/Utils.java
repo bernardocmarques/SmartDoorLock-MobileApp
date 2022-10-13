@@ -264,13 +264,12 @@ public class Utils {
         return matcher.find();
     }
 
-    private static final String ALLOWED_CHARACTERS ="0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
+    private static final String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
 
-    private static String getRandomString(final int sizeOfRandomString)
-    {
-        final Random random=new Random();
-        final StringBuilder sb=new StringBuilder(sizeOfRandomString);
-        for(int i=0;i<sizeOfRandomString;++i)
+    private static String getRandomString(final int sizeOfRandomString) {
+        final Random random = new Random();
+        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
+        for (int i = 0; i < sizeOfRandomString; ++i)
             sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
         return sb.toString();
     }
@@ -308,7 +307,7 @@ public class Utils {
                 connection.connect();
                 InputStream input = connection.getInputStream();
 
-                return JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
+                return JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
 
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
@@ -418,7 +417,7 @@ public class Utils {
 
                 InputStream input = connection.getInputStream();
 
-                return JsonParser.parseReader( new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
+                return JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
 
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
@@ -438,7 +437,7 @@ public class Utils {
     /*** -------------------------------------------- ***/
 
     public static void finishUserCreation(OnTaskCompleted<Boolean> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
 
             JsonObject data = new JsonObject();
@@ -460,7 +459,7 @@ public class Utils {
     }
 
     public static void registerPhoneId(Context context, OnTaskCompleted<Boolean> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
 
             JsonObject data = new JsonObject();
@@ -483,7 +482,7 @@ public class Utils {
     }
 
     public static void getCertificateFromDatabase(String lock_id, OnTaskCompleted<X509Certificate> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
             (new httpRequestJson(response -> {
                 if (response.get("success").getAsBoolean()) {
@@ -516,12 +515,12 @@ public class Utils {
 
 
     public static void redeemInvite(String lockMAC, String inviteID, Context context, OnTaskCompleted<Boolean> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
             String phoneId = Utils.getPhoneId(context);
 
             Utils.getPublicKeyBase64FromDatabase(lockMAC, context, keyRSA -> {
-                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + phoneId, keyRSA);
+                String masterKeyEncryptedLock = KeyStoreUtil.getInstance().generateMasterKey(lockMAC + phoneId, keyRSA);
                 Log.i(TAG, "redeemInvite: token " + tokenId);
                 JsonObject data = new JsonObject();
                 data.addProperty("id_token", tokenId);
@@ -551,7 +550,7 @@ public class Utils {
             callback.onTaskCompleted(new ArrayList<>());
             return;
         }
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
             (new httpRequestJson(response -> {
                 if (response.get("success").getAsBoolean()) {
@@ -581,7 +580,7 @@ public class Utils {
             return;
         }
 
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
 
             JsonObject data = new JsonObject();
@@ -607,7 +606,7 @@ public class Utils {
             return;
         }
 
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
 
             JsonObject data = new JsonObject();
@@ -660,7 +659,7 @@ public class Utils {
             return;
         }
 
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
 
             JsonObject data = new JsonObject();
@@ -686,7 +685,7 @@ public class Utils {
             callback.onTaskCompleted(false);
             return;
         }
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
 
             (new httpRequestJson(response -> {
@@ -703,12 +702,12 @@ public class Utils {
     }
 
     public static void redeemUserInvite(String lockMAC, Context context, OnTaskCompleted<Boolean> callback) {
-        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
+        Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result -> {
             String tokenId = result.getToken();
             String phoneId = Utils.getPhoneId(context);
 
             Utils.getPublicKeyBase64FromDatabase(lockMAC, context, keyRSA -> {
-                String masterKeyEncryptedLock =  KeyStoreUtil.getInstance().generateMasterKey(lockMAC + phoneId, keyRSA);
+                String masterKeyEncryptedLock = KeyStoreUtil.getInstance().generateMasterKey(lockMAC + phoneId, keyRSA);
                 Log.i(TAG, "redeemInvite: token " + tokenId);
                 JsonObject data = new JsonObject();
                 data.addProperty("id_token", tokenId);
@@ -743,14 +742,17 @@ public class Utils {
     public interface CommActivity {
 
         void updateUIOnBLEDisconnected();
+
         void updateUIOnBLEConnected();
 
         Context getContext();
 
         RSAUtil getRSAUtil();
+
         AESUtil getAESUtil();
 
         String getLockId();
+
         String getLockBLE();
 
         void setAESUtil(AESUtil aes);
@@ -773,14 +775,17 @@ public class Utils {
 
                                         } else { // command not ACK
                                             Log.e(TAG, "Error: Should have received ACK command. (After RAC)");
+                                            callback.onResponseReceived(new String[]{"NAK"});
                                         }
                                     });
                         });
                     }
                 });
     }
-
     public static void remoteConnection(CommActivity commActivity, String cmd, boolean encrypt, boolean close, OnResponseReceived callback) {
+        remoteConnection(commActivity, cmd, encrypt, false, close, callback);
+    }
+    public static void remoteConnection(CommActivity commActivity, String cmd, boolean encrypt, boolean decrypt, boolean close, OnResponseReceived callback) {
         Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getIdToken(false).addOnSuccessListener(result  -> {
 
             String msgEnc;
@@ -807,33 +812,41 @@ public class Utils {
 
                     String[] msgEncSplit = responseEnc.split(" ");
 
-                    if (msgEncSplit.length < 2) {
-                        Log.e(TAG, "Less then 2");
-                        return;
-                    }
-                    String msg = commActivity.getAESUtil().decrypt(msgEncSplit[0], msgEncSplit[1]);
-                    if (msg == null) {
-                        Log.e(TAG, "Error decrypting message! Operation Canceled.");
-                        if (context instanceof Activity) ((Activity) context).runOnUiThread(() -> Toast.makeText(context.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
-                        return;
-                    }
+                    if (decrypt) {
+                        if (msgEncSplit.length < 2) {
+                            Log.e(TAG, "Less then 2");
+                            return;
+                        }
+                        String msg = commActivity.getAESUtil().decrypt(msgEncSplit[0], msgEncSplit[1]);
+                        if (msg == null) {
+                            Log.e(TAG, "Error decrypting message! Operation Canceled.");
+                            if (context instanceof Activity)
+                                ((Activity) context).runOnUiThread(() -> Toast.makeText(context.getApplicationContext(), "Error decrypting message! Operation Canceled.", Toast.LENGTH_LONG).show());
+                            return;
+                        }
 
 //                    Log.e(TAG, "Received: "  + msg);
 
 
-                    String[] msgSplit = msg.split(" ");
-                    int sizeCmdSplit = msgSplit.length;
+                        String[] msgSplit = msg.split(" ");
+                        int sizeCmdSplit = msgSplit.length;
 
-                    BLEMessage bleMessage = new BLEMessage(String.join(" ", Arrays.copyOfRange(msgSplit, 0, sizeCmdSplit-3)),  parseLong(msgSplit[sizeCmdSplit-3]), parseLong(msgSplit[sizeCmdSplit-2]), parseLong(msgSplit[sizeCmdSplit-1]));
+                        BLEMessage bleMessage = new BLEMessage(String.join(" ", Arrays.copyOfRange(msgSplit, 0, sizeCmdSplit - 3)), parseLong(msgSplit[sizeCmdSplit - 3]), parseLong(msgSplit[sizeCmdSplit - 2]), parseLong(msgSplit[sizeCmdSplit - 1]));
 
-                    if (bleMessage.isValid()) {
-                        String[] cmdSplit = bleMessage.message.split(" ");
-                        callback.onResponseReceived(cmdSplit);
+                        if (bleMessage.isValid()) {
+                            String[] cmdSplit = bleMessage.message.split(" ");
+                            callback.onResponseReceived(cmdSplit);
+
+                        } else {
+                            Log.e(TAG, "Message not valid! Operation Canceled.");
+                            if (context instanceof Activity)
+                                ((Activity) context).runOnUiThread(() -> Toast.makeText(context.getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
+                            callback.onResponseReceived(new String[]{"NAK"});
+                        }
 
                     } else {
-                        Log.e(TAG, "Message not valid! Operation Canceled.");
-                        if (context instanceof Activity) ((Activity) context).runOnUiThread(() -> Toast.makeText(context.getApplicationContext(), "Message not valid! Operation Canceled.", Toast.LENGTH_LONG).show());
-                        callback.onResponseReceived(new String[]{"NAK"});
+                            String[] cmdSplit = responseEnc.split(" ");
+                            callback.onResponseReceived(cmdSplit);
                     }
 
                 } else {

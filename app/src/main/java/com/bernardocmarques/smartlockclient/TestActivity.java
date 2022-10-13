@@ -1,5 +1,6 @@
 package com.bernardocmarques.smartlockclient;
 
+import static com.bernardocmarques.smartlockclient.BluetoothLeService.EXTRA_DATA;
 import static java.lang.Integer.parseInt;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
@@ -9,10 +10,13 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -27,6 +31,9 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
     AESUtil aesUtil;
     Lock lock;
 
+    boolean remoteTest = true;
+
+    SwitchMaterial proximityUnlockSwitch;
 
 
     @Override
@@ -41,15 +48,28 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
         Log.e(TAG, lock.getLocation() != null ? "onCreate: " + lock.getLocation().getLatitude() + ", " + lock.getLocation().getLongitude() : "null location");
         Log.e(TAG, "Using lock with name: " + lock.getName() + " and id: " + lock.getId());
 
+        proximityUnlockSwitch = findViewById(R.id.switch_proximity_unlock);
+        proximityUnlockSwitch.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+            startTest();
+        });
 
 
+        if (!remoteTest) bleManager = BLEManager.getInstance();
 
-        bleManager = BLEManager.getInstance();
-
-        updateUIOnBLEDisconnected();
+        if (!remoteTest) updateUIOnBLEDisconnected();
 
 
-        bleManager.bindToBLEService(this);
+        if (!remoteTest) bleManager.bindToBLEService(this);
+
+        if (remoteTest) {
+            Utils.getPublicKeyBase64FromDatabase(lock.getId(), getContext(), rsaKey -> {
+                Log.i(TAG, "onReceive: Entra aqui");
+                rsaUtil = new RSAUtil(rsaKey);
+                getLockStateCommunication(ignore -> {
+                    startTest();
+                });
+            });
+        }
     }
 
     private static final int LOCK_EDIT_REQUEST_CODE = 1;
@@ -68,9 +88,9 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
 
     @Override
     public void updateUIOnBLEDisconnected() {
-        bleManager.onResume(this, mGattUpdateReceiver);
-        bleManager = BLEManager.getInstance();
-        bleManager.bindToBLEService(this);
+        if (!remoteTest) bleManager.onResume(this, mGattUpdateReceiver);
+        if (!remoteTest) bleManager = BLEManager.getInstance();
+        if (!remoteTest) bleManager.bindToBLEService(this);
     }
 
     public void updateUIOnBLEConnected() {
@@ -129,7 +149,7 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
 
 
     private void sendCommand(String cmd, Utils.OnResponseReceived callback) {
-        if (false) {
+        if (remoteTest) {
             Utils.sendRemoteCommandWithAuthentication(this,cmd, callback);
         } else {
             bleManager.sendCommandWithAuthentication(this,cmd, callback);
@@ -138,16 +158,36 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
 
     ArrayList<Long> testTimes = new ArrayList<>();
 
+
+    private void printTest() {
+        String str = testTimes.toString();
+
+        if (str.length() > 4000) {
+            Log.v(TAG, "str.length = " + str.length());
+            int chunkCount = str.length() / 4000;     // integer division
+            for (int i = 0; i <= chunkCount; i++) {
+                int max = 4000 * (i + 1);
+                if (max >= str.length()) {
+                    Log.v(TAG, "chunk " + i + " of " + chunkCount + ":" + str.substring(4000 * i));
+                } else {
+                    Log.v(TAG, "chunk " + i + " of " + chunkCount + ":" + str.substring(4000 * i, max));
+                }
+            }
+        } else {
+            Log.v(TAG, str);
+        }
+    }
+
     private void startTest() {
         Log.i(TAG, "Start Test");
-        doTest(2000 - testTimes.size());
+        doTestRTT(2000 - testTimes.size());
     }
 
     private void doTest(int n) {
         Log.i(TAG, "Test " + n);
 
         if (n == 0) {
-            Log.i(TAG, "Test results: " + testTimes.toString());
+            printTest();
             return;
         }
         long startTime = System.currentTimeMillis();
@@ -156,12 +196,49 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
         sendCommand(n%2==0 ? "RUD": "RLD", responseSplit -> {
             if (responseSplit[0].equals("ACK")) {
                 testTimes.add(System.currentTimeMillis() - startTime);
-                new Handler().postDelayed(() ->  doTest(n-1), 100);   //5 seconds
+                Log.i(TAG, "ACK");
+                new Handler().postDelayed(() ->  doTest(n-1), 100);
             } else { // command not  ACK
                 Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
+                if (remoteTest) startTest();
+
             }
         });
+    }
 
+    private void doTestRTT(int n) {
+        Log.i(TAG, "Test " + n);
+
+        if (n == 0) {
+            printTest();
+            return;
+        }
+        long startTime = System.currentTimeMillis();
+
+        if (remoteTest) {
+                Utils.remoteConnection(this,"PNG", false, false,  true,
+                        responseSplit -> {
+                            if (responseSplit[0].equals("LOK")) {
+                                testTimes.add(System.currentTimeMillis() - startTime);
+                                Log.i(TAG, "LOK");
+                                new Handler().postDelayed(() ->  doTestRTT(n-1), 100);
+                            } else {
+                                Log.e(TAG, "Error: Should have received LOK command. Received " + responseSplit[0]);
+                            }
+                        });
+
+            } else {
+            bleManager.sendCommandAndReceiveResponse(this,"PNG", false, false,
+                    responseSplit -> {
+                        if (responseSplit[0].equals("LOK")) {
+                            testTimes.add(System.currentTimeMillis() - startTime);
+                            Log.i(TAG, "LOK");
+                            new Handler().postDelayed(() ->  doTestRTT(n-1), 100);
+                        } else {
+                            Log.e(TAG, "Error: Should have received LOK command. Received " + responseSplit[0]);
+                        }
+                    });
+        }
 
     }
 
@@ -176,7 +253,8 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
                 runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Door State " + responseSplit[1], Toast.LENGTH_LONG).show());
                 callback.onResponseReceived(null);
             } else { // command not  ACK
-                Log.e(TAG, "Error: Should have received ACK command. (After RUD)");
+                if (remoteTest) startTest();
+                Log.e(TAG, "Error: Should have received ACK command. (After RDS)");
             }
         });
     }
@@ -217,7 +295,7 @@ public class TestActivity extends AppCompatActivity implements Utils.CommActivit
     @Override
     protected void onResume() {
         super.onResume();
-        bleManager.onResume(this, mGattUpdateReceiver);
+        if (!remoteTest) bleManager.onResume(this, mGattUpdateReceiver);
     }
 
 
